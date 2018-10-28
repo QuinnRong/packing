@@ -6,9 +6,9 @@
    Please cite:
    
    "Packing Hyperspheres in High-Dimensional Euclidean Spaces"
-   	M. Skoge, A. Donev, F. H. Stillinger and S. Torquato, 2006
-	
-   if you use these codes.	
+    M. Skoge, A. Donev, F. H. Stillinger and S. Torquato, 2006
+  
+   if you use these codes.  
 */
 
 #include "box.h"
@@ -30,37 +30,33 @@
 // Constructor
 //==============================================================
 box::box(int N_i, double r_i, double growthrate_i, double maxpf_i):
-  r(r_i),          
-  N(N_i),
-  growthrate(growthrate_i),
-  h(N_i+1),
-  maxpf(maxpf_i)
+    N(N_i), r(r_i), growthrate(growthrate_i), maxpf(maxpf_i), h(N_i+1)
 {
-  ngrids = Optimalngrids(maxpf);
-  cells.set_size(ngrids);
- 
-  s = new sphere[N];
-  binlist = new int[N];
-  x = new vector<DIM>[N];        
-  h.s = s;
+    ngrids = Optimalngrids(maxpf);
+    cells.set_size(ngrids);
 
-  gtime = 0.;
-  rtime = 0.;
-  ncollisions = 0;
-  ntransfers = 0;
-  nchecks = 0;
-  neventstot = 0;
-  ncycles = 0;
-  xmomentum = 0.; 
-  pressure = 0.;
+    s = new sphere[N];
+    binlist = new int[N];
+    x = new vector<DIM>[N];        
+    h.s = s;
 
-  cells.set_size(ngrids);
-  cells.initialize(-1);      // initialize cells to -1
-  srand(::time(0));        // initialize the random number generator
-  for (int i=0; i<N; i++)    // initialize binlist to -1
-    binlist[i] = -1;
-  
-  time(&start);
+    gtime = 0.;
+    rtime = 0.;
+    ncollisions = 0;
+    ntransfers = 0;
+    nchecks = 0;
+    neventstot = 0;
+    ncycles = 0;
+    xmomentum = 0.; 
+    pressure = 0.;
+
+    cells.set_size(ngrids);
+    cells.initialize(-1);      // initialize cells to -1
+    srand(::time(0));        // initialize the random number generator
+    for (int i=0; i<N; i++)    // initialize binlist to -1
+        binlist[i] = -1;
+
+    time(&start);
 }
 
 
@@ -69,9 +65,9 @@ box::box(int N_i, double r_i, double growthrate_i, double maxpf_i):
 //==============================================================
 box::~box() 
 {
-  delete[] s;
-  delete[] binlist;
-  delete[] x;
+    delete[] s;
+    delete[] binlist;
+    delete[] x;
 }
 
 
@@ -115,17 +111,17 @@ void box::RecreateSpheres(const char* filename, double temp)
 //==============================================================
 void box::CreateSpheres(double temp)
 {
-  int Ncurrent = 0;
-  for(int i=0; i<N; i++)
+    int Ncurrent = 0;
+    for(int i=0; i<N; i++)
     {
       CreateSphere(Ncurrent);
       Ncurrent++;
     }
-  if (Ncurrent != N)
-    std::cout << "problem! only made " << Ncurrent << " out of " << N << " desired spheres" << std::endl;
-  
-  VelocityGiver(temp);
-  SetInitialEvents();
+    if (Ncurrent != N)
+        std::cout << "problem! only made " << Ncurrent << " out of " << N << " desired spheres" << std::endl;
+
+    VelocityGiver(temp);
+    SetInitialEvents();
 }
 
    
@@ -134,75 +130,72 @@ void box::CreateSpheres(double temp)
 //==============================================================
 void box::CreateSphere(int Ncurrent)
 {
-  int keeper;    // boolean variable: 1 means ok, 0 means sphere already there
-  int counter = 0;   // counts how many times sphere already exists
-  vector<DIM> xrand;  // random new position vector
-  double d = 0.;
+    int keeper;    // boolean variable: 1 means ok, 0 means sphere already there
+    int counter = 0;   // counts how many times sphere already exists
+    vector<DIM> xrand;  // random new position vector
+    double d = 0.;
 
-  while (counter<1000)
+    while (counter<1000)
     {
-      keeper = 1;
-      
-      for(int k=0; k<DIM; k++) 
-	xrand[k] = ((double)rand()/(double)RAND_MAX)*SIZE;
-      
-      for (int i=0; i<Ncurrent; i++)  // need to check nearest image!
-	{
-	  d=0.;
-	  for (int k=0; k<DIM; k++)
-	    {
-	      if ((xrand[k] - s[i].x[k])*(xrand[k] - s[i].x[k]) > SIZE*SIZE/4.)
-		{
-		  if (xrand[k] > SIZE/2.)  // look at right image
-		    d += (xrand[k] - (s[i].x[k]+SIZE))*
-		      (xrand[k] - (s[i].x[k]+SIZE));
-		  else                     // look at left image
-		    d += (xrand[k] - (s[i].x[k]-SIZE))*
-		      (xrand[k] - (s[i].x[k]-SIZE));
-		}
-	      else
-		d += (xrand[k] - s[i].x[k])*(xrand[k] - s[i].x[k]);
-	    }
-	  	   
-	  if (d <= 4*r*r)
-	    {
-	      keeper = 0;
-	      counter++;
-	      break;
-	    }
-	}
-      if (keeper == 1)
-	break;
+        keeper = 1;
+
+        for(int k=0; k<DIM; k++) 
+            xrand[k] = ((double)rand()/(double)RAND_MAX)*SIZE;
+
+        for (int i=0; i<Ncurrent; i++)  // need to check nearest image!
+        {
+            d=0.;
+            for (int k=0; k<DIM; k++)
+            {
+                if ((xrand[k] - s[i].x[k])*(xrand[k] - s[i].x[k]) > SIZE*SIZE/4.)
+                {
+                    if (xrand[k] > SIZE/2.)  // look at right image
+                        d += (xrand[k] - (s[i].x[k]+SIZE))*(xrand[k] - (s[i].x[k]+SIZE));
+                    else                     // look at left image
+                        d += (xrand[k] - (s[i].x[k]-SIZE))*(xrand[k] - (s[i].x[k]-SIZE));
+                }
+                else
+                    d += (xrand[k] - s[i].x[k])*(xrand[k] - s[i].x[k]);
+            }
+            if (d <= 4*r*r)
+            {
+                keeper = 0;
+                counter++;
+                break;
+            }
+        }
+
+        if (keeper == 1)
+            break;
     }
-  if (counter >= 1000)
+    if (counter >= 1000)
     {
-      std::cout << "counter >= 1000" << std::endl;
-      exit(-1);
+        std::cout << "counter >= 1000" << std::endl;
+        exit(-1);
     }
 
-  // now convert xrand into index vector for cells
-  vector<DIM,int> cell;
-  cell = vector<DIM>::integer(xrand*((double)(ngrids))/SIZE);
-  
-  s[Ncurrent] = sphere(Ncurrent, xrand, cell, gtime);
-  
-  //first check to see if entry at cell
-  if (cells.get(cell) == -1) //if yes, add Ncurrent to cells gridfield
-    cells.get(cell) = Ncurrent;
+    // now convert xrand into index vector for cells
+    vector<DIM,int> cell;
+    cell = vector<DIM>::integer(xrand*((double)(ngrids))/SIZE);
 
-  else  // if no, add i to right place in binlist
+    s[Ncurrent] = sphere(Ncurrent, xrand, cell, gtime);
+
+    // first check to see if entry at cell
+    if (cells.get(cell) == -1) // if yes, add Ncurrent to cells gridfield
+        cells.get(cell) = Ncurrent;
+    else  // if no, add i to right place in binlist
     {  
-      int iterater = cells.get(cell); // now iterate through to end and add Ncurrent
-      int pointer = iterater;
-      while (iterater != -1)
-	{
-	  pointer = iterater;
-	  iterater = binlist[iterater];
-	}
-      binlist[pointer] = Ncurrent;
+        int iterater = cells.get(cell); // now iterate through to end and add Ncurrent
+        int pointer = iterater;
+        while (iterater != -1)
+        {
+            pointer = iterater;
+            iterater = binlist[iterater];
+        }
+        binlist[pointer] = Ncurrent;
     }
 
-  Ncurrent++;
+    Ncurrent++;
 }
 
 
@@ -220,37 +213,37 @@ void box::AssignCells()
       
       //first check to see if entry at cell
       if (cells.get(cell) == -1) //if yes, add Ncurrent to cells gridfield
-	cells.get(cell) = i;
+  cells.get(cell) = i;
       
       else  // if no, add i to right place in binlist
-	{  
-	  int iterater = cells.get(cell); // now iterate through to end and add Ncurrent
-	  int pointer = iterater;
-	  while (iterater != -1)
-	    {
-	      pointer = iterater;
-	      iterater = binlist[iterater];
-	    }
-	  binlist[pointer] = i;
-	}
+  {  
+    int iterater = cells.get(cell); // now iterate through to end and add Ncurrent
+    int pointer = iterater;
+    while (iterater != -1)
+      {
+        pointer = iterater;
+        iterater = binlist[iterater];
+      }
+    binlist[pointer] = i;
+  }
     }
 }
 
-	
+  
 //==============================================================
 // Velocity Giver, assigns initial velocities from Max/Boltz dist.
 //==============================================================
 void box::VelocityGiver(double T)
 {
-  for (int i=0; i<N; i++)
+    for (int i=0; i<N; i++)
     {
-      for (int k=0; k<DIM; k++)
-	{
-	  if (T==0.)
-	    s[i].v[k] = 0.;
-	  else
-	    s[i].v[k] = Velocity(T);
-	}
+        for (int k=0; k<DIM; k++)
+        {
+            if (T==0.)
+                s[i].v[k] = 0.;
+            else
+                s[i].v[k] = Velocity(T);
+        }
     }
 }
 
@@ -260,27 +253,27 @@ void box::VelocityGiver(double T)
 //==============================================================
 double box::Velocity(double T)
 {
-  double rand_num;                       // random number between -0.5 and 0.5
-  double sigmasquared = T;    // Assumes M = mass of sphere = 1
-  double sigma = sqrt(sigmasquared); // variance of Gaussian
-  double stepsize = 1000.;           // stepsize for discretization of integral
-  double vel = 0.0;                  // velocity
-  double dv=sigma/stepsize;
-  double p=0.0;
-  
-  rand_num = (double)rand() / (double)RAND_MAX - 0.5;
-  if(rand_num < 0) 
+    double rand_num;                       // random number between -0.5 and 0.5
+    double sigmasquared = T;    // Assumes M = mass of sphere = 1
+    double sigma = sqrt(sigmasquared); // variance of Gaussian
+    double stepsize = 1000.;           // stepsize for discretization of integral
+    double vel = 0.0;                  // velocity
+    double dv=sigma/stepsize;
+    double p=0.0;
+
+    rand_num = (double)rand() / (double)RAND_MAX - 0.5;
+    if(rand_num < 0) 
     {
-      rand_num = -rand_num;
-      dv = -dv;
+        rand_num = -rand_num;
+        dv = -dv;
     }
-  
-  while(fabs(p) < rand_num) // integrate until the integral equals rand
+
+    while(fabs(p) < rand_num) // integrate until the integral equals rand
     {
-      p += dv * 0.39894228 * exp(-vel*vel/(2.*sigmasquared))/sigma;
-      vel += dv;
+        p += dv * 0.39894228 * exp(-vel*vel/(2.*sigmasquared))/sigma;
+        vel += dv;
     }
-  return vel;
+    return vel;
 }
 
 
@@ -289,11 +282,11 @@ double box::Velocity(double T)
 //==============================================================
 void box::SetInitialEvents()
 {
-  for (int i=0; i<N; i++)  // set all events to checks
+    for (int i=0; i<N; i++)  // set all events to checks
     {
-      event e(gtime, i, INF); 
-      s[i].nextevent = e;
-      h.insert(i);
+        event e(gtime, i, INF); 
+        s[i].nextevent = e;
+        h.insert(i);
     }
 }
 
@@ -357,36 +350,36 @@ event box::FindNextTransfer(int i)
     {
       double newtime;
       if (vi[k]==0.) 
-	newtime= dblINF;
+  newtime= dblINF;
       else if (vi[k]>0)  // will hit right wall
-	{
-	  newtime = ((double)(s[i].cell[k]+1)*SIZE/((double)(ngrids))
-		     - xi[k])/(vi[k]);
-	  if (newtime < 0)
-	    std::cout << "error in FindNextTransfer right newtime < 0 " << k << std::endl;
-	  if (newtime<ttime)
-	    {
-	      wallindex = k+1;
-	      ttime = newtime;
-	    }
-	}
+  {
+    newtime = ((double)(s[i].cell[k]+1)*SIZE/((double)(ngrids))
+         - xi[k])/(vi[k]);
+    if (newtime < 0)
+      std::cout << "error in FindNextTransfer right newtime < 0 " << k << std::endl;
+    if (newtime<ttime)
+      {
+        wallindex = k+1;
+        ttime = newtime;
+      }
+  }
       else if (vi[k]<0)  // will hit left wall
-	{
-	  newtime = ((double)(s[i].cell[k])*SIZE/((double)(ngrids)) 
-		     - xi[k])/(vi[k]);
-	  if (newtime < 0)
-	    {
-	      if (newtime > -10.*DBL_EPSILON) // this should happen only when reading in a configuration and spheres is on left boundary moving left
-		newtime = 0.;
-	      else
-		std::cout << "error in FindNextTransfer left newtime < 0 " << k << std::endl;
-	    }
-	  if (newtime<ttime)
-	    {
-	      wallindex = -(k+1);
-	      ttime = newtime;
-	    }
-	}
+  {
+    newtime = ((double)(s[i].cell[k])*SIZE/((double)(ngrids)) 
+         - xi[k])/(vi[k]);
+    if (newtime < 0)
+      {
+        if (newtime > -10.*DBL_EPSILON) // this should happen only when reading in a configuration and spheres is on left boundary moving left
+    newtime = 0.;
+        else
+    std::cout << "error in FindNextTransfer left newtime < 0 " << k << std::endl;
+      }
+    if (newtime<ttime)
+      {
+        wallindex = -(k+1);
+        ttime = newtime;
+      }
+  }
     }
 
   if (ttime < 0)
@@ -408,7 +401,7 @@ event box::FindNextTransfer(int i)
 // Find next collision for sphere i 
 //==============================================================
 void box::ForAllNeighbors(int i, vector<DIM,int> vl, vector<DIM,int> vr,
-			  neighbor& operation)
+        neighbor& operation)
 {
   vector<DIM,int> cell = s[i].cell;
 
@@ -427,19 +420,19 @@ void box::ForAllNeighbors(int i, vector<DIM,int> vl, vector<DIM,int> vr,
      //std::cout << grid << "..." << cell+grid << "\n";
      for(int k=0; k<DIM; k++)
      {
-        offset[k]=grid[k]+ngrids;  // do this so no negatives 	
+        offset[k]=grid[k]+ngrids;  // do this so no negatives   
         if (cell[k]+grid[k]<0) //out of bounds to left
           pboffset[k] = -1;
-	else if (cell[k]+grid[k]>=ngrids) // out of bounds to right
-	  pboffset[k] = 1;
+  else if (cell[k]+grid[k]>=ngrids) // out of bounds to right
+    pboffset[k] = 1;
         else
           pboffset[k] = 0;
      }     
      int j = cells.get((cell+offset)%ngrids);
      while(j!=-1)
        {
-	 operation.Operation(j,pboffset);
-	 j = binlist[j];
+   operation.Operation(j,pboffset);
+   j = binlist[j];
        }
 
      // A. Donev:     
@@ -460,24 +453,24 @@ void box::ForAllNeighbors(int i, vector<DIM,int> vl, vector<DIM,int> vr,
 // PredictCollision
 //==============================================================
 void box::PredictCollision(int i, int j, vector<DIM, int> pboffset, 
-			     double& ctime, int& cpartner, 
-			     vector<DIM, int>& cpartnerpboffset)
+           double& ctime, int& cpartner, 
+           vector<DIM, int>& cpartnerpboffset)
 {
   double ctimej;
   
   if (i!=j)
-    {	 
+    {  
       ctimej = CalculateCollision(i,j,pboffset.Double())+gtime;
       
       if (ctimej < gtime)
-	std::cout << "error in find collision ctimej < 0" << std::endl;
+  std::cout << "error in find collision ctimej < 0" << std::endl;
       
       if ((ctimej < ctime)&&(ctimej < s[j].nextevent.time))
-	{
-	  ctime = ctimej;
-	  cpartner = j;
-	  cpartnerpboffset = pboffset;
-	}	
+  {
+    ctime = ctimej;
+    cpartner = j;
+    cpartnerpboffset = pboffset;
+  } 
     }
 }
 
@@ -503,7 +496,7 @@ event box::FindNextCollision(int i)
   if (cc.cpartner == i)  // found no collisions in neighboring cells
     {
       if (cc.ctime != dblINF)
-	std::cout << "ctime != dblINF" << std::endl;
+  std::cout << "ctime != dblINF" << std::endl;
       e = event(dblINF,i,INF);  // give check at double INF
     }
   else
@@ -555,22 +548,22 @@ double box::CalculateCollision(int i, int j, vector<DIM> pboffset)
   if (c <= 0.)
     {
       if(b < 0.) // spheres already overlapping and approaching
-	{
-	  //std::cout << "spheres overlapping and approaching" << std::endl;
-	  //std::cout << "# events= " << neventstot << std::endl;
-	  x = 0.;	
-	}
+  {
+    //std::cout << "spheres overlapping and approaching" << std::endl;
+    //std::cout << "# events= " << neventstot << std::endl;
+    x = 0.; 
+  }
     }
   else if (det > -10.*DBL_EPSILON)
     {
       if (det < 0.)  // determinant can be very small for double roots
-	det = 0.;    
+  det = 0.;    
       if (b < 0.)
-	x = c/(-b + sqrt(det));
+  x = c/(-b + sqrt(det));
       else if ((a < 0.)&&(b > 0.))
-	x = -(b + sqrt(det))/a;
+  x = -(b + sqrt(det))/a;
       else
-	x = dblINF;
+  x = dblINF;
     }
   return x;
 }
@@ -596,29 +589,29 @@ void box::ProcessEvent()
       s[i].nextevent = f;
       h.downheap(1);
       if (f.time < e.time)
-	{
-	  std::cout << "error, replacing event with < time" << std::endl;
-	  exit(-1);
-	}
+  {
+    std::cout << "error, replacing event with < time" << std::endl;
+    exit(-1);
+  }
       
       /*
       if (f.time == e.time)
-	{
-	  std::cout << "replacing event with = time (it's ok)" << std::endl;
-	  std::cout << "# events= " << neventstot << std::endl;
-	}
+  {
+    std::cout << "replacing event with = time (it's ok)" << std::endl;
+    std::cout << "# events= " << neventstot << std::endl;
+  }
       */
 
       // make sure collision was symmetric and give j a check
       if ((s[e.j].nextevent.j != i)||(s[e.j].nextevent.time != gtime))
-	{
-	  std::cout << "error collisions not symmetric" << std::endl;
-	  std::cout << "collision between " << e.i << " and " << e.j << " at time " << e.time << std::endl;
-	  std::cout << "but " << e.j << " thinks it has " << s[e.j].nextevent.j<< " "  << s[e.j].nextevent.time << std::endl;
-	  exit(-1);
-	}
+  {
+    std::cout << "error collisions not symmetric" << std::endl;
+    std::cout << "collision between " << e.i << " and " << e.j << " at time " << e.time << std::endl;
+    std::cout << "but " << e.j << " thinks it has " << s[e.j].nextevent.j<< " "  << s[e.j].nextevent.time << std::endl;
+    exit(-1);
+  }
       else  // give j a check
-	s[e.j].nextevent.j = INF;
+  s[e.j].nextevent.j = INF;
     }
   else if (e.j==INF)      // check!  
     {
@@ -638,12 +631,12 @@ void box::ProcessEvent()
       h.downheap(1);
       //r = FindNextEvent(i, e.j-N-DIM-1);
       if (f.time <= e.time)
-	{
-	  std::cout << "error after transfer, replacing new event with <= time" << " " << std::endl;
-	  std::cout << "e.time= " << e.time << ", f.time= " << f.time << ", f.i= " << f.i << ", f.j= " << f.j << std::endl;
-	  std::cout << "difference= " << e.time - f.time << std::endl;
-	  exit(-1);
-	}
+  {
+    std::cout << "error after transfer, replacing new event with <= time" << " " << std::endl;
+    std::cout << "e.time= " << e.time << ", f.time= " << f.time << ", f.i= " << f.i << ", f.j= " << f.j << std::endl;
+    std::cout << "difference= " << e.time - f.time << std::endl;
+    exit(-1);
+  }
     }
 }
 
@@ -723,10 +716,10 @@ void box::Transfer(event e)
 
       // if in right-most cell, translate x and cell
       if (s[i].cell[k] == ngrids - 1)
-	{
-	  s[i].x[k] -= SIZE;
-	  celli[k] -= ngrids;
-	}
+  {
+    s[i].x[k] -= SIZE;
+    celli[k] -= ngrids;
+  }
     }
   else if (j<N+DIM+1)  // left wall
     {
@@ -735,10 +728,10 @@ void box::Transfer(event e)
 
       // if in left-most cell, translate x and cell
       if (s[i].cell[k] == 0)
-	{
-	  s[i].x[k] += SIZE;
-	  celli[k] += ngrids;
-	}
+  {
+    s[i].x[k] += SIZE;
+    celli[k] += ngrids;
+  }
     }
   else
     std::cout << "error in Transfer" << std::endl;
@@ -762,12 +755,12 @@ void box::UpdateCell(int i, vector<DIM,int>& celli)
   else if (cells.get(s[i].cell) == i) 
     {
       if (binlist[i] == -1)
-	cells.get(s[i].cell) = -1;
+  cells.get(s[i].cell) = -1;
       else
-	{
-	  cells.get(s[i].cell) = binlist[i];
-	  binlist[i] = -1;
-	}
+  {
+    cells.get(s[i].cell) = binlist[i];
+    binlist[i] = -1;
+  }
     }
 
   else if (cells.get(s[i].cell) == -1)
@@ -781,20 +774,20 @@ void box::UpdateCell(int i, vector<DIM,int>& celli)
       int iterater = cells.get(s[i].cell);
       int pointer = iterater;
       while ((iterater != i)&&(iterater != -1))
-	{
-	  pointer = iterater;
-	  iterater = binlist[iterater];
-	}
+  {
+    pointer = iterater;
+    iterater = binlist[iterater];
+  }
       if (iterater == -1)  // got to end of list without finding i
-	{
-	  std::cout << "problem " << i << " wasn't in claimed, cell iterater = -1" << std::endl;
-	  OutputCells();
-	}
+  {
+    std::cout << "problem " << i << " wasn't in claimed, cell iterater = -1" << std::endl;
+    OutputCells();
+  }
       else  // we found i!
-	{
-	  binlist[pointer] = binlist[i]; 
-	  binlist[i] = -1;
-	}	  
+  {
+    binlist[pointer] = binlist[i]; 
+    binlist[i] = -1;
+  }   
     } 
 
   // now add i to cell array at celli
@@ -808,10 +801,10 @@ void box::UpdateCell(int i, vector<DIM,int>& celli)
       int iterater = cells.get(celli);  // now iterate through to end and add i
       int pointer = iterater;
       while (iterater != -1)  // find the end of the list
-	{
-	  pointer = iterater;
-	  iterater = binlist[iterater];
-	}
+  {
+    pointer = iterater;
+    iterater = binlist[iterater];
+  }
       binlist[pointer] = i;
       binlist[i] = -1; // redundant
     }
@@ -865,9 +858,9 @@ double box::Energy()
 //==============================================================
 double box::PackingFraction()
 {
-  double r_now = r + gtime*growthrate;
-  double v = (pow(sqrt(PI)*r_now, DIM))/(exp(lgamma(1.+((double)(DIM))/2.)));
-  return N*v/(pow(SIZE, DIM));
+    double r_now = r + gtime*growthrate;
+    double v = (pow(sqrt(PI)*r_now, DIM))/(exp(lgamma(1.+((double)(DIM))/2.)));
+    return N*v/(pow(SIZE, DIM));
 }
 
 
@@ -876,11 +869,9 @@ double box::PackingFraction()
 //==============================================================
 int box::Optimalngrids(double maxpf)
 {
-  double maxr;
-
-  maxr = pow(exp(lgamma(1.+((double)(DIM))/2.))*maxpf/N, 1./DIM)/sqrt(PI);
-
-  return (int)(1./(2.*maxr));
+    double maxr;
+    maxr = pow(exp(lgamma(1.+((double)(DIM))/2.))*maxpf/N, 1./DIM)/sqrt(PI);
+    return (int)(1./(2.*maxr));
 }
 
 
@@ -889,27 +880,27 @@ int box::Optimalngrids(double maxpf)
 //==============================================================
 void box::Process(int n)
 {
-  double deltat = gtime;
-  for (int i=0; i<n; i++)
+    double deltat = gtime;
+    for (int i=0; i<n; i++)
     {
-      ProcessEvent();
+        ProcessEvent();
     }
-  pf = PackingFraction();   // packing fraction
-  deltat = gtime - deltat;
-  double oldenergy = energy;
-  energy = Energy();        // kinetic energy
+    pf = PackingFraction();   // packing fraction
+    deltat = gtime - deltat;
+    double oldenergy = energy;
+    energy = Energy();        // kinetic energy
 
-  energychange = ((oldenergy - energy)/oldenergy)*100; // percent change in energy
+    energychange = ((oldenergy - energy)/oldenergy)*100; // percent change in energy
 
-  if (deltat != 0.) 
-    pressure = 1+xmomentum/(2.*energy*N*deltat);
- 
-  // reset to 0
-  ncollisions = 0;
-  ntransfers = 0;
-  nchecks = 0;
-  xmomentum = 0.;
-  ncycles++;
+    if (deltat != 0.) 
+        pressure = 1+xmomentum/(2.*energy*N*deltat);
+
+    // reset to 0
+    ncollisions = 0;
+    ntransfers = 0;
+    nchecks = 0;
+    xmomentum = 0.;
+    ncycles++;
 }
 
 
@@ -943,13 +934,13 @@ void box::Synchronize(bool rescale)
       s[i].nextevent.time -= gtime;
 
       if (s[i].nextevent.time < 0.)
-	std::cout << "error, event times negative after synchronization" << std::endl;
+  std::cout << "error, event times negative after synchronization" << std::endl;
       if (rescale == true)   // give everyone checks
-	{
-	  s[i].nextevent = event(0., i, INF); 
-	  s[i].v /= vavg;
-	}
-	  
+  {
+    s[i].nextevent = event(0., i, INF); 
+    s[i].v /= vavg;
+  }
+    
       s[i].lutime = 0.;
     }
   r += gtime*growthrate;       // r defined at gtime = 0
@@ -992,12 +983,12 @@ void box::WriteConfiguration(const char* wconfigfile)
 //   output << 1 << " " << 0 << " " << 0 << " " << 1 << "\n";
 // #elif (DIM == 3)
 //   output << 1 << " " << 0 << " " << 0 << " " << 0 << " " << 1 << " " 
-// 	 << 0 << " " << 0 << " " << 0 << " " << 1 << "\n";
+//   << 0 << " " << 0 << " " << 0 << " " << 1 << "\n";
 // #elif (DIM == 4)
 //   output << 1 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
-// 	 << 1 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " 
-// 	 << 1 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
-// 	 << 1 << "\n";
+//   << 1 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " " 
+//   << 1 << " " << 0 << " " << 0 << " " << 0 << " " << 0 << " "
+//   << 1 << "\n";
 // #endif
 
 //   output << "T T T" << "\n";
@@ -1016,7 +1007,7 @@ void box::WriteConfiguration(const char* wconfigfile)
     {
       output << i + 1 << " " << 1 << " ";
       for (int k=0; k<DIM; k++)
-	output << std::setprecision(16) << s[i].x[k] << " ";
+  output << std::setprecision(16) << s[i].x[k] << " ";
       output << "\n";
     }
       

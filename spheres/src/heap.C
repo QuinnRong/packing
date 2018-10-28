@@ -14,13 +14,11 @@
 //==============================================================
 // Constructor
 //==============================================================
-heap::heap(int maxsize_i):
-  maxsize(maxsize_i)
+heap::heap(int maxsize_i): maxsize(maxsize_i)
 {
-  a = new int[maxsize];
-  index = new int[maxsize];
-  
-  N = 0;   // current number of events in heap
+    a = new int[maxsize];
+    index = new int[maxsize];
+    N = 0;   // current number of events in heap
 }
 
 
@@ -29,11 +27,11 @@ heap::heap(int maxsize_i):
 //==============================================================
 heap::heap(const heap &h)
 {
-  maxsize = h.maxsize;
-  a = h.a;
-  index = h.index;
-  N = h.N;                // current number of events in heap
-  s = h.s;
+    maxsize = h.maxsize;
+    a = h.a;
+    index = h.index;
+    N = h.N;                // current number of events in heap
+    s = h.s;
 }
 
 
@@ -42,8 +40,8 @@ heap::heap(const heap &h)
 //==============================================================
 heap::~heap()
 {
-  delete[] a;
-  delete[] index;
+    delete[] a;
+    delete[] index;
 }
 
 //==============================================================
@@ -51,16 +49,17 @@ heap::~heap()
 //==============================================================
 void heap::upheap(int k)
 {
-  int i = a[k];
+    int i = a[k];
 
-  while ((k>1)&&(s[a[k/2]].nextevent.time > s[i].nextevent.time))
+    while ((k>1)&&(s[a[k/2]].nextevent.time > s[i].nextevent.time))
     {
-      a[k] = a[k/2];
-      index[a[k/2]] = k;
-      k = k/2;
+        a[k] = a[k/2];
+        index[a[k/2]] = k;
+        k = k/2;
     }
-  a[k] = i;
-  index[i] = k;
+    a[k] = i;
+    
+    index[i] = k;
 }
 
 //==============================================================
@@ -91,14 +90,14 @@ void heap::downheap(int k)
 //==============================================================
 void heap::insert(int i)
 {
-  if (N >= maxsize)
-    std::cout << "error, N >= maxsize, cannot insert another event" << std::endl;
-  else
+    if (N >= maxsize)
+        std::cout << "error, N >= maxsize, cannot insert another event" << std::endl;
+    else
     {
-      N++;
-      a[N] = i;
-      index[i] = N;
-      upheap(N);
+        N++;
+        a[N] = i;
+        index[i] = N;
+        upheap(N);
     }  
 }
 

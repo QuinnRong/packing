@@ -40,12 +40,12 @@
 //---------------------------------------------------------------------------
 class neighbor
 {
- public:
+public:
   int i;
   
   neighbor(int i_i);
 
- public:
+public:
   virtual void Operation(int j, vector<DIM, int>& pboffset) = 0;
 };
 
