@@ -1001,7 +1001,7 @@ void box::WriteConfiguration(const char* wconfigfile)
 // #endif
 
 //   output << "T T T" << "\n";
-  printf("radius = %f\n", r);
+  // printf("radius = %f\n", r);
   output << "\n" << N << " atoms\n\n";
   output << "1 atom types\n\n";
   output << "0 1 xlo xhi\n";

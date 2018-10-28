@@ -1,9 +1,11 @@
 
 CXX = g++
 
+CXXFLAGS = -Iinclude
+
 TARGET = spheres
 
-SRCDIR = ./
+SRCDIR = ./src/
 SRCS = $(wildcard $(SRCDIR)*.C)
 
 OBJDIR = ./bin/
@@ -14,14 +16,14 @@ $(shell mkdir -p $(OBJDIR))
 endif
 
 $(TARGET):$(OBJS)
-	$(CXX) $^ -o $@  $(LIBS)
+	$(CXX) $^ -o $@
 
 $(OBJDIR)%.o:$(SRCDIR)%.C
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
 run:
-	./spheres.exe input.txt
+	./spheres.exe ./input/input.txt
 
 .PHONY:clean
 clean:
-	-rm -rf $(TARGET) bin
+	-rm -rf $(TARGET) bin output/*

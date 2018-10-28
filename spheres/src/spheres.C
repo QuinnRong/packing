@@ -34,73 +34,72 @@ int main(int argc, char **argv)
     input.readfile[0]=0;
 
   if (input.readfile[0]) // read in existing configuration
-    {
-      // read the header
-      std::ifstream infile(input.readfile);
-      if (!infile)
-	{
-	  std::cout << "error, can't open " << input.readfile  << std::endl;
-	  exit(-1);
-	}
-      else
-	{
-	  int dim;
-	  infile >> dim; infile.ignore(256, '\n');
-	  if (dim != DIM)  // quit if dimensions don't match
+  {
+    // read the header
+    std::ifstream infile(input.readfile);
+    if (!infile)
+  	{
+  	  std::cout << "error, can't open " << input.readfile  << std::endl;
+  	  exit(-1);
+  	}
+    else
+  	{
+  	  int dim;
+  	  infile >> dim; infile.ignore(256, '\n');
+  	  if (dim != DIM)  // quit if dimensions don't match
 	    {
 	      std::cout << "error, dimensions don't match" << std::endl;
 	      exit(-1);
 	    }
-	  infile.ignore(256, '\n');  // ignore the N 1 line
-	  infile >> input.N; infile.ignore(256, '\n');
-	  std::cout << "N = " << input.N << std::endl;
-	  infile >> d; infile.ignore(256, '\n');
-	  std::cout << "d = " << d << std::endl;
-	  r = d/2.;
-	  std::cout << "r = " << r << std::endl;
-	}
-    }
+  	  infile.ignore(256, '\n');  // ignore the N 1 line
+  	  infile >> input.N; infile.ignore(256, '\n');
+  	  std::cout << "N = " << input.N << std::endl;
+  	  infile >> d; infile.ignore(256, '\n');
+  	  std::cout << "d = " << d << std::endl;
+  	  r = d/2.;
+  	  std::cout << "r = " << r << std::endl;
+  	}
+    infile.close();
+  }
   else // create a new configuration
-    {
-      r = pow(input.initialpf*pow(SIZE, DIM)/(input.N*VOLUMESPHERE), 1.0/((double)(DIM)));
-    }
+  {
+    r = pow(input.initialpf*pow(SIZE, DIM)/(input.N*VOLUMESPHERE), 1.0/((double)(DIM)));
+  }
 
   box b(input.N, r, input.growthrate, input.maxpf);
-  printf("packing fraction = %f\n", b.pf);
   
   std::cout << "ngrids = " << b.ngrids << std::endl;
   std::cout << "DIM = " << DIM << std::endl;
 
   if(input.readfile[0])
-    {
-      std::cout << "Reading in positions of spheres" << std::endl;
-      b.RecreateSpheres(input.readfile, input.temp);
-    }
+  {
+    std::cout << "Reading in positions of spheres" << std::endl;
+    b.RecreateSpheres(input.readfile, input.temp);
+  }
   else 
-    {
-      std::cout << "Creating new positions of spheres" << std::endl;
-      b.CreateSpheres(input.temp);
-    } 
+  {
+    std::cout << "Creating new positions of spheres" << std::endl;
+    b.CreateSpheres(input.temp);
+  } 
   
   std::ofstream output(input.datafile);
   output.precision(16);  
 
+  output << "step packing-fraction pressure energy-change total-events" << std::endl;
   int step = 0;
   while ((b.pf < input.maxpf) && (b.pressure < input.maxpressure)) 
-    {
-      printf("timestep = %d, packing fraction = %f\n", step++, b.pf);
-      b.Process(input.eventspercycle*input.N);
-      output << b.pf << " " << b.pressure << " " << 
-	b.energychange << " " << b.neventstot << " " << std::endl;
-
-      b.Synchronize(true);
-    }
+  {
+    std::cout << "step = " << step << " pf = " << b.pf << " pressure = " << b.pressure << std::endl;
+    b.Process(input.eventspercycle*input.N);
+    output << step++ << " " << b.pf << " " << b.pressure << " "
+           << b.energychange << " " << b.neventstot << " " << std::endl;
+    b.Synchronize(true);
+  }
+  std::cout << "\nfinal radius: " << b.r << std::endl;
+  output << "\nfinal radius: " << b.r << std::endl;
   
   output.close();
-
   b.WriteConfiguration(input.writefile);
-  
- 
-  
+
   return 0;
 }
