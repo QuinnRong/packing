@@ -296,18 +296,23 @@ void box::SetInitialEvents()
 //==============================================================
 event box::FindNextEvent(int i)
 {
-  event t = FindNextTransfer(i);
-  event c = FindNextCollision(i);
+    event t = FindNextTransfer(i);
+    event c = FindNextCollision(i);
 
-  if ((c.time < t.time)&&(c.j == INF)) // next event is check at DBL infinity
-    return c;
-  else if (c.time < t.time) // next event is collision!
+    if ((c.time < t.time) && (c.j == INF)) // next event is check at DBL infinity
     {
-      CollisionChecker(c); 
-      return c; 
+        std::cout << "c.time < t.time && c.j == INF" << std::endl;
+        return c;
     }
-  else // next event is transfer!
-    return t;  
+    else if (c.time < t.time) // next event is collision!
+    {
+        CollisionChecker(c); 
+        return c; 
+    }
+    else // next event is transfer!
+    {
+        return t;
+    }
 } 
 
 
@@ -317,160 +322,158 @@ event box::FindNextEvent(int i)
 //==============================================================
 void box::CollisionChecker(event c)
 {
-  int i = c.i;
-  int j = c.j;
-  event cj(c.time,j,i,c.v*(-1));
+    int i = c.i;
+    int j = c.j;
+    event cj(c.time, j, i, c.v * (-1));
 
-  // j should have NO event before collision with i!
-  if (!(c.time  < s[j].nextevent.time))
-    std::cout << i << " " <<  j << " error collchecker, s[j].nextevent.time= " << s[j].nextevent.time << " " << s[j].nextevent.j << ", c.time= " << c.time << std::endl;
-  
-  int k = s[j].nextevent.j; 
-  if ((k < N) && (k!=i)) // j's next event was collision so give k a check
-    s[k].nextevent.j = INF;
-  
-  // give collision cj to j
-  s[j].nextevent = cj;
-  h.upheap(h.index[j]);
+    // j should have NO event before collision with i!
+    if (!(c.time < s[j].nextevent.time))
+        std::cout << i << " " << j << " error collchecker, s[j].nextevent.time= " 
+                  << s[j].nextevent.time << " " << s[j].nextevent.j << ", c.time= " << c.time << std::endl;
+
+    int k = s[j].nextevent.j; 
+    if ((k < N) && (k!=i)) // j's next event was collision so give k a check
+        s[k].nextevent.j = INF;
+
+    // give collision cj to j
+    s[j].nextevent = cj;
+    h.upheap(h.index[j]);
 }
 
 
 //==============================================================
-// Find next collision for sphere i 
+// Find next transfer for sphere i 
 //==============================================================
 event box::FindNextTransfer(int i)
 {
-  double ttime = dblINF;  
-  int wallindex = INF;   // -(k+1) left wall, (k+1) right wall
+    double ttime = dblINF;  
+    int wallindex = INF;   // -(k+1) left wall, (k+1) right wall
 
-  vector<DIM> xi = s[i].x + s[i].v*(gtime - s[i].lutime);
-  vector<DIM> vi = s[i].v;
+    vector<DIM> xi = s[i].x + s[i].v * (gtime - s[i].lutime);
+    vector<DIM> vi = s[i].v;
 
-  for (int k=0; k<DIM; k++)
+    for (int k = 0; k < DIM; k++)
     {
-      double newtime;
-      if (vi[k]==0.) 
-  newtime= dblINF;
-      else if (vi[k]>0)  // will hit right wall
-  {
-    newtime = ((double)(s[i].cell[k]+1)*SIZE/((double)(ngrids))
-         - xi[k])/(vi[k]);
-    if (newtime < 0)
-      std::cout << "error in FindNextTransfer right newtime < 0 " << k << std::endl;
-    if (newtime<ttime)
-      {
-        wallindex = k+1;
-        ttime = newtime;
-      }
-  }
-      else if (vi[k]<0)  // will hit left wall
-  {
-    newtime = ((double)(s[i].cell[k])*SIZE/((double)(ngrids)) 
-         - xi[k])/(vi[k]);
-    if (newtime < 0)
-      {
-        if (newtime > -10.*DBL_EPSILON) // this should happen only when reading in a configuration and spheres is on left boundary moving left
-    newtime = 0.;
-        else
-    std::cout << "error in FindNextTransfer left newtime < 0 " << k << std::endl;
-      }
-    if (newtime<ttime)
-      {
-        wallindex = -(k+1);
-        ttime = newtime;
-      }
-  }
+        double newtime;
+        if (vi[k] == 0.) 
+            newtime = dblINF;
+        else if (vi[k] > 0)  // will hit right wall
+        {
+            newtime = ((double)(s[i].cell[k] + 1) * SIZE / ((double)(ngrids)) - xi[k]) / (vi[k]);
+            if (newtime < 0)
+                std::cout << "error in FindNextTransfer right newtime < 0 " << k << std::endl;
+            if (newtime < ttime)
+            {
+                wallindex = k + 1;
+                ttime = newtime;
+            }
+        }
+        else if (vi[k] < 0)  // will hit left wall
+        {
+            newtime = ((double)(s[i].cell[k]) * SIZE / ((double)(ngrids)) - xi[k]) / (vi[k]);
+            if (newtime < 0)
+            {
+                if (newtime > -10.*DBL_EPSILON) // this should happen only when reading in a configuration and spheres is on left boundary moving left
+                    newtime = 0.;
+                else
+                    std::cout << "error in FindNextTransfer left newtime < 0 " << k << std::endl;
+            }
+            if (newtime < ttime)
+            {
+                wallindex = -(k + 1);
+                ttime = newtime;
+            }
+        }
     }
 
-  if (ttime < 0)
+    if (ttime < 0)
     {
-      std::cout << "error in FindNextTransfer ttime < 0" << std::endl;
-      std::cout << i << std::endl;
-      std::cout << xi << " " << s[i].x << std::endl;
-      std::cout << vi << " " << s[i].v << std::endl;
-      std::cout << s[i].cell << std::endl;
-      exit(-1);
+        std::cout << "error in FindNextTransfer ttime < 0" << std::endl;
+        std::cout << i << std::endl;
+        std::cout << xi << " " << s[i].x << std::endl;
+        std::cout << vi << " " << s[i].v << std::endl;
+        std::cout << s[i].cell << std::endl;
+        exit(-1);
     }
-  // make the event and return it
-  event e = event(ttime+gtime,i,wallindex+DIM+N+1);
-  return e;
+
+    // make the event and return it
+    event e = event(ttime + gtime, i, wallindex + DIM + N + 1);
+    return e;
 }
 
 
 //==============================================================
 // Find next collision for sphere i 
 //==============================================================
-void box::ForAllNeighbors(int i, vector<DIM,int> vl, vector<DIM,int> vr,
-        neighbor& operation)
+void box::ForAllNeighbors(int i, vector<DIM, int> vl, vector<DIM, int> vr, neighbor& operation)
 {
-  vector<DIM,int> cell = s[i].cell;
+    vector<DIM, int> cell = s[i].cell;
 
-  // now iterate through nearest neighbors
-  vector<DIM, int> offset;          // nonnegative neighbor offset
-  vector<DIM, int> pboffset;        // nearest image offset
+    // now iterate through nearest neighbors
+    vector<DIM, int> offset;          // nonnegative neighbor offset
+    vector<DIM, int> pboffset;        // nearest image offset
+    vector<DIM, int> grid;
 
-   vector<DIM,int> grid;
+    grid = vl;
+    while (1)
+    {
+        //if (vr[0] > 1)
+        //std::cout << grid << "..." << cell+grid << "\n";
+        for(int k = 0; k < DIM; k++)
+        {
+            offset[k] = grid[k] + ngrids;           // do this so no negatives   
+            if (cell[k] + grid[k] < 0)              // out of bounds to left
+                pboffset[k] = -1;
+            else if (cell[k] + grid[k] >= ngrids)   // out of bounds to right
+                pboffset[k] = 1;
+            else
+                pboffset[k] = 0;
+        }
+        int j = cells.get((cell + offset) % ngrids);
+        while (j != -1)
+        {
+            operation.Operation(j, pboffset);
+            j = binlist[j];
+        }
 
-   int ii ;
-
-   grid=vl;
-   while(1)
-   {
-     //if (vr[0] > 1)
-     //std::cout << grid << "..." << cell+grid << "\n";
-     for(int k=0; k<DIM; k++)
-     {
-        offset[k]=grid[k]+ngrids;  // do this so no negatives   
-        if (cell[k]+grid[k]<0) //out of bounds to left
-          pboffset[k] = -1;
-  else if (cell[k]+grid[k]>=ngrids) // out of bounds to right
-    pboffset[k] = 1;
-        else
-          pboffset[k] = 0;
-     }     
-     int j = cells.get((cell+offset)%ngrids);
-     while(j!=-1)
-       {
-   operation.Operation(j,pboffset);
-   j = binlist[j];
-       }
-
-     // A. Donev:     
-     // This code makes this loop dimension-independent
-     // It is basically a flattened-out loop nest of depth DIM
-     for(ii=0;ii<DIM;ii++)
-     {
-       grid[ii] += 1;
-       if(grid[ii]<=vr[ii]) break;
-       grid[ii]=vl[ii];
-     }
-     if(ii>=DIM) break;
-   }  
+        // A. Donev:     
+        // This code makes this loop dimension-independent
+        // It is basically a flattened-out loop nest of depth DIM
+        // (-1, -1) (0, -1) (1, -1) (-1, 0) (0, 0) (1, 0) (-1, 1) (0, 1) (1, 1)
+        int ii;
+        for(ii = 0; ii < DIM; ii++)
+        {
+            grid[ii] += 1;
+            if(grid[ii] <= vr[ii]) break;
+            grid[ii] = vl[ii];
+        }
+        if(ii >= DIM) break;
+    }
 }
 
 
 //==============================================================
 // PredictCollision
 //==============================================================
-void box::PredictCollision(int i, int j, vector<DIM, int> pboffset, 
-           double& ctime, int& cpartner, 
+void box::PredictCollision(int i, int j, vector<DIM, int> pboffset, double& ctime, int& cpartner, 
            vector<DIM, int>& cpartnerpboffset)
 {
-  double ctimej;
-  
-  if (i!=j)
-    {  
-      ctimej = CalculateCollision(i,j,pboffset.Double())+gtime;
-      
-      if (ctimej < gtime)
-  std::cout << "error in find collision ctimej < 0" << std::endl;
-      
-      if ((ctimej < ctime)&&(ctimej < s[j].nextevent.time))
-  {
-    ctime = ctimej;
-    cpartner = j;
-    cpartnerpboffset = pboffset;
-  } 
+    double ctimej;
+    // std::cout << "i = " << i << ", j = " << j << std::endl;
+
+    if (i != j)
+    {
+        ctimej = CalculateCollision(i, j, pboffset.Double()) + gtime;
+
+        if (ctimej < gtime)
+            std::cout << "error in find collision ctimej < 0" << std::endl;
+
+        if ((ctimej < ctime) && (ctimej < s[j].nextevent.time))
+        {
+            ctime = ctimej;
+            cpartner = j;
+            cpartnerpboffset = pboffset;
+        } 
     }
 }
 
@@ -480,29 +483,29 @@ void box::PredictCollision(int i, int j, vector<DIM, int> pboffset,
 //==============================================================
 event box::FindNextCollision(int i)
 {
-  collision cc(i, this);
-  
-  vector<DIM, int> vl, vr;
+    collision cc(i, this);
 
-  for (int k=0; k<DIM; k++)  // check all nearest neighbors
+    vector<DIM, int> vl, vr;
+
+    for (int k = 0; k < DIM; k++)   // check all nearest neighbors
     {
-      vl[k] = -1;
-      vr[k] = 1;
+        vl[k] = -1;
+        vr[k] = 1;
     }
-  
-  ForAllNeighbors(i,vl,vr,cc);
 
-  event e;
-  if (cc.cpartner == i)  // found no collisions in neighboring cells
+    ForAllNeighbors(i, vl, vr, cc);
+
+    event e;
+    if (cc.cpartner == i)           // found no collisions in neighboring cells
     {
-      if (cc.ctime != dblINF)
-  std::cout << "ctime != dblINF" << std::endl;
-      e = event(dblINF,i,INF);  // give check at double INF
+        if (cc.ctime != dblINF)
+            std::cout << "ctime != dblINF" << std::endl;
+        e = event(dblINF, i, INF);    // give check at double INF
     }
-  else
-    e = event(cc.ctime,i,cc.cpartner,cc.cpartnerpboffset);
+    else
+        e = event(cc.ctime, i, cc.cpartner, cc.cpartnerpboffset);
 
-  return e;
+    return e;
 }
 
 
@@ -511,61 +514,55 @@ event box::FindNextCollision(int i)
 //==============================================================
 double box::CalculateCollision(int i, int j, vector<DIM> pboffset)
 {
-// calculate updated position and velocity of i and j
-  vector<DIM> xi = s[i].x + s[i].v*(gtime - s[i].lutime);
-  vector<DIM> vi = s[i].v;
-  vector<DIM> xj = s[j].x + pboffset*SIZE + s[j].v*(gtime - s[j].lutime);
-  vector<DIM> vj = s[j].v;
-  
-  double r_now = r + gtime*growthrate;
-  
-  double A,B,C;
-  A = vector<DIM>::norm_squared(vi - vj) - 4*growthrate*growthrate;
-  B = vector<DIM>::dot(xi - xj, vi - vj) - 4*r_now*growthrate;
-  C = vector<DIM>::norm_squared(xi - xj) - 4*r_now*r_now;
+    // calculate updated position and velocity of i and j
+    vector<DIM> xi = s[i].x + s[i].v*(gtime - s[i].lutime);
+    vector<DIM> vi = s[i].v;
+    vector<DIM> xj = s[j].x + pboffset*SIZE + s[j].v*(gtime - s[j].lutime);
+    vector<DIM> vj = s[j].v;
 
-  if (C < -1E-12*2.*r_now)
+    double r_now = r + gtime*growthrate;
+
+    double A,B,C;
+    A = vector<DIM>::norm_squared(vi - vj) - 4*growthrate*growthrate;
+    B = vector<DIM>::dot(xi - xj, vi - vj) - 4*r_now*growthrate;
+    C = vector<DIM>::norm_squared(xi - xj) - 4*r_now*r_now;
+
+    if (C < -1E-12*2.*r_now)
     {
-      std::cout << "error, " << i << " and " << j << " are overlapping at time "<< gtime << " and A, B, C = "  << A << " " << " " << B << " " << " " << C <<  std::endl;
-      std::cout << "velocity i=  " << s[i].v << ", velocity j= " << s[j].v << ", gtime= " << gtime << ", det= " << B*B - A*C << std::endl;
-      exit(-1);
+        std::cout << "error, " << i << " and " << j << " are overlapping at time "<< gtime << " and A, B, C = "  << A << " " << " " << B << " " << " " << C <<  std::endl;
+        std::cout << "velocity i=  " << s[i].v << ", velocity j= " << s[j].v << ", gtime= " << gtime << ", det= " << B*B - A*C << std::endl;
+        exit(-1);
     }
-      
-  return QuadraticFormula(A, B, C);
+
+    return QuadraticFormula(A, B, C);
 }
 
 
 //==============================================================
-// Quadratic Formula ax^2 + bx + c = 0
+// Quadratic Formula ax^2 + 2bx + c = 0
 //==============================================================
  double box::QuadraticFormula(double a, double b, double c)
 {
-  double x = dblINF;
-  double xpos;
-  double xneg;
-  double det = b*b - a*c;
+    double x = dblINF;
+    double det = b*b - a*c;
 
-  if (c <= 0.)
+    if (c <= 0.)
     {
-      if(b < 0.) // spheres already overlapping and approaching
-  {
-    //std::cout << "spheres overlapping and approaching" << std::endl;
-    //std::cout << "# events= " << neventstot << std::endl;
-    x = 0.; 
-  }
+        if(b < 0.) // spheres already overlapping and approaching
+        {
+            std::cout << "spheres overlapping and approaching" << std::endl;
+            std::cout << "# events= " << neventstot << std::endl;
+            x = 0.; 
+        }
     }
-  else if (det > -10.*DBL_EPSILON)
+    else if (det > -10.*DBL_EPSILON)
     {
-      if (det < 0.)  // determinant can be very small for double roots
-  det = 0.;    
-      if (b < 0.)
-  x = c/(-b + sqrt(det));
-      else if ((a < 0.)&&(b > 0.))
-  x = -(b + sqrt(det))/a;
-      else
-  x = dblINF;
+        if (det < 0.)  // determinant can be very small for double roots
+            det = 0.;    
+        if (b < 0. || a < 0.)
+            x = -(b + sqrt(det))/a;
     }
-  return x;
+    return x;
 }
 
 
@@ -574,69 +571,68 @@ double box::CalculateCollision(int i, int j, vector<DIM> pboffset)
 //==============================================================
 void box::ProcessEvent()
 {  
-  neventstot++;
-  // Extract first event from heap
-  int i = h.extractmax();   
-  event e = s[i].nextevent; // current event
-  event f;                  // replacement event
+    neventstot++;
+    int i = h.extractmax();   // Extract first event from heap
+    event e = s[i].nextevent; // current event
+    event f;                  // replacement event
 
-  if ((e.j>=0)&&(e.j<N))  // collision!
+    if ((e.j >= 0) && (e.j < N))  // collision!
     {
-      ncollisions++;
-      //std::cout << "collision between " << e.i << " and " << e.j << " at time " << e.time << std::endl;
-      Collision(e);
-      f = FindNextEvent(i);
-      s[i].nextevent = f;
-      h.downheap(1);
-      if (f.time < e.time)
-  {
-    std::cout << "error, replacing event with < time" << std::endl;
-    exit(-1);
-  }
-      
-      /*
-      if (f.time == e.time)
-  {
-    std::cout << "replacing event with = time (it's ok)" << std::endl;
-    std::cout << "# events= " << neventstot << std::endl;
-  }
-      */
+        ncollisions++;
+        //std::cout << "collision between " << e.i << " and " << e.j << " at time " << e.time << std::endl;
+        Collision(e);
+        f = FindNextEvent(i);
+        s[i].nextevent = f;
+        h.downheap(1);
+        if (f.time < e.time)
+        {
+            std::cout << "error, replacing event with < time" << std::endl;
+            exit(-1);
+        }
 
-      // make sure collision was symmetric and give j a check
-      if ((s[e.j].nextevent.j != i)||(s[e.j].nextevent.time != gtime))
-  {
-    std::cout << "error collisions not symmetric" << std::endl;
-    std::cout << "collision between " << e.i << " and " << e.j << " at time " << e.time << std::endl;
-    std::cout << "but " << e.j << " thinks it has " << s[e.j].nextevent.j<< " "  << s[e.j].nextevent.time << std::endl;
-    exit(-1);
-  }
-      else  // give j a check
-  s[e.j].nextevent.j = INF;
+        /*
+        if (f.time == e.time)
+        {
+            std::cout << "replacing event with = time (it's ok)" << std::endl;
+            std::cout << "# events= " << neventstot << std::endl;
+        }
+        */
+
+        // make sure collision was symmetric and give j a check
+        if ((s[e.j].nextevent.j != i)||(s[e.j].nextevent.time != gtime))
+        {
+            std::cout << "error collisions not symmetric" << std::endl;
+            std::cout << "collision between " << e.i << " and " << e.j << " at time " << e.time << std::endl;
+            std::cout << "but " << e.j << " thinks it has " << s[e.j].nextevent.j<< " "  << s[e.j].nextevent.time << std::endl;
+            exit(-1);
+        }
+        else  // give j a check
+        s[e.j].nextevent.j = INF;
     }
-  else if (e.j==INF)      // check!  
+    else if (e.j == INF)      // check!  
     {
-      nchecks++;
-      //std::cout << "check for " << e.i << " at time " << e.time << std::endl;
-      f = FindNextEvent(i);
-      s[i].nextevent = f;
-      h.downheap(1);
+        nchecks++;
+        //std::cout << "check for " << e.i << " at time " << e.time << std::endl;
+        f = FindNextEvent(i);
+        s[i].nextevent = f;
+        h.downheap(1);
     }
-  else                    // transfer!
+    else                    // transfer!
     {
-      ntransfers++;
-      //std::cout << "transfer for " << e.i << " at time " << e.time << std::endl;
-      Transfer(e);
-      f = FindNextEvent(i);
-      s[i].nextevent = f;
-      h.downheap(1);
-      //r = FindNextEvent(i, e.j-N-DIM-1);
-      if (f.time <= e.time)
-  {
-    std::cout << "error after transfer, replacing new event with <= time" << " " << std::endl;
-    std::cout << "e.time= " << e.time << ", f.time= " << f.time << ", f.i= " << f.i << ", f.j= " << f.j << std::endl;
-    std::cout << "difference= " << e.time - f.time << std::endl;
-    exit(-1);
-  }
+        ntransfers++;
+        //std::cout << "transfer for " << e.i << " at time " << e.time << std::endl;
+        Transfer(e);
+        f = FindNextEvent(i);
+        s[i].nextevent = f;
+        h.downheap(1);
+        //r = FindNextEvent(i, e.j-N-DIM-1);
+        if (f.time <= e.time)
+        {
+            std::cout << "error after transfer, replacing new event with <= time" << " " << std::endl;
+            std::cout << "e.time= " << e.time << ", f.time= " << f.time << ", f.i= " << f.i << ", f.j= " << f.j << std::endl;
+            std::cout << "difference= " << e.time - f.time << std::endl;
+            exit(-1);
+        }
     }
 }
 
@@ -646,48 +642,48 @@ void box::ProcessEvent()
 //=============================================================
 void box::Collision(event e)
 {
-  double ctime = e.time;
-  int i = e.i;
-  int j = e.j;
-  vector<DIM,int> v = e.v;  // virtual image
-  gtime = ctime;
+    double ctime = e.time;
+    int i = e.i;
+    int j = e.j;
+    vector<DIM,int> v = e.v;  // virtual image
+    gtime = ctime;
 
-  // Update positions and cells of i and j to ctime
-  s[i].x += s[i].v*(gtime-s[i].lutime);
-  s[j].x += s[j].v*(gtime-s[j].lutime);
+    // Update positions and cells of i and j to ctime
+    s[i].x += s[i].v*(gtime-s[i].lutime);
+    s[j].x += s[j].v*(gtime-s[j].lutime);
 
-  // Check to see if a diameter apart
-  double r_now = r + gtime*growthrate;
-  double distance = vector<DIM>::norm_squared(s[i].x - s[j].x- v.Double()*SIZE) - 4*r_now*r_now;
-  if (distance*distance > 10.*DBL_EPSILON)
-    std::cout << "overlap " << distance << std::endl;
+    // Check to see if a diameter apart
+    double r_now = r + gtime*growthrate;
+    double distance = vector<DIM>::norm_squared(s[i].x - s[j].x- v.Double()*SIZE) - 4*r_now*r_now;
+    if (distance*distance > 10.*DBL_EPSILON)
+        std::cout << "overlap " << distance << std::endl;
 
-  s[i].lutime = gtime;
-  s[j].lutime = gtime;
-  
-  vector<DIM,double> vipar;          // parallel comp. vi
-  vector<DIM,double> vjpar;          // parallel comp. vj
-  vector<DIM,double> viperp;         // perpendicular comp. vi
-  vector<DIM,double> vjperp;         // perpendicular comp. vj
+    s[i].lutime = gtime;
+    s[j].lutime = gtime;
 
-  // make unit vector out of displacement vector
-  vector<DIM,double> dhat;
-  dhat = s[i].x - s[j].x - v.Double()*SIZE;  // using image of j!!
-  double dhatmagnitude = sqrt(dhat.norm_squared());
-  dhat /= dhatmagnitude;
+    vector<DIM,double> vipar;          // parallel comp. vi
+    vector<DIM,double> vjpar;          // parallel comp. vj
+    vector<DIM,double> viperp;         // perpendicular comp. vi
+    vector<DIM,double> vjperp;         // perpendicular comp. vj
 
-  vipar = dhat*vector<DIM>::dot(s[i].v, dhat);
-  vjpar = dhat*vector<DIM>::dot(s[j].v, dhat);
-  viperp = s[i].v - vipar;
-  vjperp = s[j].v - vjpar;
+    // make unit vector out of displacement vector
+    vector<DIM,double> dhat;
+    dhat = s[i].x - s[j].x - v.Double()*SIZE;  // using image of j!!
+    double dhatmagnitude = sqrt(dhat.norm_squared());
+    dhat /= dhatmagnitude;
 
-  s[i].v = vjpar + dhat*2.*growthrate + viperp;
-  s[j].v = vipar - dhat*2.*growthrate + vjperp;
+    vipar = dhat*vector<DIM>::dot(s[i].v, dhat);
+    vjpar = dhat*vector<DIM>::dot(s[j].v, dhat);
+    viperp = s[i].v - vipar;
+    vjperp = s[j].v - vjpar;
 
-  // momentum exchange
-  double xvelocity;   // exchanged velocity
-  xvelocity = vector<DIM>::dot(s[i].v - s[j].v, dhat) - 4.*growthrate;
-  xmomentum += M*xvelocity*dhatmagnitude;
+    s[i].v = vjpar + dhat*2.*growthrate + viperp;
+    s[j].v = vipar - dhat*2.*growthrate + vjperp;
+
+    // momentum exchange
+    double xvelocity;   // exchanged velocity
+    xvelocity = vector<DIM>::dot(s[i].v - s[j].v, dhat) - 4.*growthrate;
+    xmomentum += M*xvelocity*dhatmagnitude;
 }
 
 
@@ -696,47 +692,45 @@ void box::Collision(event e)
 //=============================================================
 void box::Transfer(event e)
 {
-  gtime = e.time;
-  int i = e.i;
-  int j = e.j;
-  int k=0;           // dimension perpendicular to wall it crosses
- 
-  // update position and lutime (velocity doesn't change)
-  s[i].x += s[i].v*(gtime-s[i].lutime);
-  s[i].lutime = gtime;
+    gtime = e.time;
+    int i = e.i;
+    int j = e.j;
+    int k = 0;           // dimension perpendicular to wall it crosses
 
-  vector<DIM,int> celli;  // new cell for i
-  celli = s[i].cell;  // this is not redundant
-  
-  // update cell
-  if (j>N+DIM+1)  // right wall
+    // update position and lutime (velocity doesn't change)
+    s[i].x += s[i].v * (gtime-s[i].lutime);
+    s[i].lutime = gtime;
+
+    vector<DIM, int> celli;  // new cell for i
+    celli = s[i].cell;  // this is not redundant
+
+    // update cell
+    if (j > N + DIM + 1)  // right wall
     {
-      k = j-N-DIM-2;
-      celli[k] = s[i].cell[k] + 1;
+        k = j - N - DIM - 2;
+        celli[k] = s[i].cell[k] + 1;
 
-      // if in right-most cell, translate x and cell
-      if (s[i].cell[k] == ngrids - 1)
-  {
-    s[i].x[k] -= SIZE;
-    celli[k] -= ngrids;
-  }
+        if (s[i].cell[k] == ngrids - 1) // if in right-most cell, translate x and cell
+        {
+            s[i].x[k] -= SIZE;
+            celli[k] -= ngrids;
+        }
     }
-  else if (j<N+DIM+1)  // left wall
+    else if (j < N + DIM + 1)  // left wall
     {
-      k = -j+N+DIM;
-      celli[k] = s[i].cell[k] - 1;
+        k = -j + N + DIM;
+        celli[k] = s[i].cell[k] - 1;
 
-      // if in left-most cell, translate x and cell
-      if (s[i].cell[k] == 0)
-  {
-    s[i].x[k] += SIZE;
-    celli[k] += ngrids;
-  }
+        if (s[i].cell[k] == 0)          // if in left-most cell, translate x and cell
+        {
+            s[i].x[k] += SIZE;
+            celli[k] += ngrids;
+        }
     }
-  else
-    std::cout << "error in Transfer" << std::endl;
-      
-  UpdateCell(i, celli); 
+    else
+        std::cout << "error in Transfer" << std::endl;
+
+    UpdateCell(i, celli); 
 }
 
 
@@ -745,68 +739,63 @@ void box::Transfer(event e)
 //=============================================================
 void box::UpdateCell(int i, vector<DIM,int>& celli)
 {
-  if(ngrids==1) return;
-   
-  if (celli == s[i].cell)
-    std::cout << "error in update cell..shouldn't be the same" << std::endl;
-  
-  // delete i from cell array at cell
+    if (ngrids == 1) return;
 
-  else if (cells.get(s[i].cell) == i) 
+    if (celli == s[i].cell)
+        std::cout << "error in update cell..shouldn't be the same" << std::endl;
+    else if (cells.get(s[i].cell) == i)     // delete i from cell array at cell
     {
-      if (binlist[i] == -1)
-  cells.get(s[i].cell) = -1;
-      else
-  {
-    cells.get(s[i].cell) = binlist[i];
-    binlist[i] = -1;
-  }
+        if (binlist[i] == -1)
+            cells.get(s[i].cell) = -1;
+        else
+        {
+            cells.get(s[i].cell) = binlist[i];
+            binlist[i] = -1;
+        }
     }
-
-  else if (cells.get(s[i].cell) == -1)
+    else if (cells.get(s[i].cell) == -1)
     {
-      std::cout << "error " << i << " not in claimed cell UpdateCell" << std::endl;
-      OutputCells();
+        std::cout << "error " << i << " not in claimed cell UpdateCell" << std::endl;
+        OutputCells();
     }
-
-  else  // if no, find i in binlist
+    else  // if no, find i in binlist
     {  
-      int iterater = cells.get(s[i].cell);
-      int pointer = iterater;
-      while ((iterater != i)&&(iterater != -1))
-  {
-    pointer = iterater;
-    iterater = binlist[iterater];
-  }
-      if (iterater == -1)  // got to end of list without finding i
-  {
-    std::cout << "problem " << i << " wasn't in claimed, cell iterater = -1" << std::endl;
-    OutputCells();
-  }
-      else  // we found i!
-  {
-    binlist[pointer] = binlist[i]; 
-    binlist[i] = -1;
-  }   
-    } 
+        int iterater = cells.get(s[i].cell);
+        int pointer = iterater;
+        while ((iterater != i) && (iterater != -1))
+        {
+            pointer = iterater;
+            iterater = binlist[iterater];
+        }
+        if (iterater == -1)  // got to end of list without finding i
+        {
+            std::cout << "problem " << i << " wasn't in claimed, cell iterater = -1" << std::endl;
+            OutputCells();
+        }
+        else  // we found i!
+        {
+            binlist[pointer] = binlist[i]; 
+            binlist[i] = -1;
+        }
+    }
 
-  // now add i to cell array at celli
-  s[i].cell = celli;
-  
-  //first check to see if entry at celli
-  if (cells.get(celli) == -1) //if yes, add i to cells gridfield
-    cells.get(celli) = i;
-  else  // if no, add i to right place in binlist
+    // now add i to cell array at celli
+    s[i].cell = celli;
+
+    // first check to see if entry at celli
+    if (cells.get(celli) == -1) //if yes, add i to cells gridfield
+        cells.get(celli) = i;
+    else  // if no, add i to right place in binlist
     {
-      int iterater = cells.get(celli);  // now iterate through to end and add i
-      int pointer = iterater;
-      while (iterater != -1)  // find the end of the list
-  {
-    pointer = iterater;
-    iterater = binlist[iterater];
-  }
-      binlist[pointer] = i;
-      binlist[i] = -1; // redundant
+        int iterater = cells.get(celli);  // now iterate through to end and add i
+        int pointer = iterater;
+        while (iterater != -1)  // find the end of the list
+        {
+            pointer = iterater;
+            iterater = binlist[iterater];
+        }
+        binlist[pointer] = i;
+        binlist[i] = -1; // redundant
     }
 }
 
@@ -889,7 +878,6 @@ void box::Process(int n)
     deltat = gtime - deltat;
     double oldenergy = energy;
     energy = Energy();        // kinetic energy
-
     energychange = ((oldenergy - energy)/oldenergy)*100; // percent change in energy
 
     if (deltat != 0.) 
@@ -926,29 +914,29 @@ void box::PrintStatistics()
 //==============================================================
 void box::Synchronize(bool rescale)
 {
-  double vavg = sqrt(2.*M*energy);
+    double vavg = sqrt(2.*M*energy);
 
-  for (int i=0; i<N; i++)
+    for (int i = 0; i < N; i++)
     {
-      s[i].x = s[i].x + s[i].v*(gtime-s[i].lutime);
-      s[i].nextevent.time -= gtime;
+        s[i].x = s[i].x + s[i].v * (gtime-s[i].lutime);
+        s[i].nextevent.time -= gtime;
 
-      if (s[i].nextevent.time < 0.)
-  std::cout << "error, event times negative after synchronization" << std::endl;
-      if (rescale == true)   // give everyone checks
-  {
-    s[i].nextevent = event(0., i, INF); 
-    s[i].v /= vavg;
-  }
-    
-      s[i].lutime = 0.;
+        if (s[i].nextevent.time < 0.)
+            std::cout << "error, event times negative after synchronization" << std::endl;
+        if (rescale == true)   // give everyone checks
+        {
+            s[i].nextevent = event(0., i, INF); 
+            s[i].v /= vavg;
+        }
+
+        s[i].lutime = 0.;
     }
-  r += gtime*growthrate;       // r defined at gtime = 0
-  rtime += gtime;
-  gtime = 0.;
-  
-  if (rescale == true)
-    Process(N);
+    r += gtime*growthrate;       // r defined at gtime = 0
+    rtime += gtime;
+    gtime = 0.;
+
+    if (rescale == true)
+        Process(N);
 }
 
 

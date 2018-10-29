@@ -30,7 +30,7 @@ sphere::sphere(const sphere& s)
     cell = s.cell;
     lutime = s.lutime;
     nextevent = s.nextevent;
-    nextcollision = s.nextcollision;
+    // nextcollision = s.nextcollision;
 }
 
 //==============================================================

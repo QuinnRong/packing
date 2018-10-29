@@ -23,14 +23,18 @@ public:
     double time;             // time of next collision
     int i;        // collision partner with lower number
     int j;        // collision partner with higher number
-    vector<DIM,int> v;        // virtual image
+    vector<DIM, int> v;        // virtual image
 
-    /* 0<=j<=N                binary collision between i and j
-    j=N+DIM+1+x            transfer where x=-(k+1) for left wall
-                        and x=k+1 for right wall
-    j=INF                 both check after event that did not altered motion of                           i and check after event that altered motion of i, i.e                           rescaling of velocities. I currently don't see need t                           o separate the two
+    /*
+    if 0 <= j < N, collision between i and j;
 
-    j=-1                  check after collision
+    if j == N + DIM + 1 + x, transfer of i;
+    where wall index x = -(k + 1) for left wall and x = (k + 1) for right wall.
+    For example, if DIM = 3, then k = 0, 1, 2, and wall index will be -1, 1, -2, 2, -3, 3;
+
+    if j == INF, check for i;
+
+    if j == -1, it means check after collision
 
     Virtual identifiers as scalars...I think bad idea, but here's my work
     there will be easily fixed problems if DIM>=10

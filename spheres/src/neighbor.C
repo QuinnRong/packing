@@ -9,10 +9,7 @@
 //==============================================================
 //==============================================================
 
-neighbor::neighbor(int i_i)
- : i(i_i)
-{
-}
+neighbor::neighbor(int i_i): i(i_i) { }
 
 
 //==============================================================
@@ -21,12 +18,10 @@ neighbor::neighbor(int i_i)
 //==============================================================
 //==============================================================
 
-collision::collision(int i_i, box *b_i)
-  : neighbor(i_i),
-    b(b_i)
+collision::collision(int i_i, box *b_i): neighbor(i_i), b(b_i)
 {
-  ctime = dblINF;
-  cpartner = i;
+    ctime = dblINF;
+    cpartner = i;
 }
 
 
@@ -35,6 +30,6 @@ collision::collision(int i_i, box *b_i)
 //==============================================================
 void collision::Operation(int j, vector<DIM, int>& pboffset)
 {
-  b->PredictCollision(i, j, pboffset, ctime, cpartner, cpartnerpboffset);
+    b->PredictCollision(i, j, pboffset, ctime, cpartner, cpartnerpboffset);
 }
 

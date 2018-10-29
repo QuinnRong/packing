@@ -51,14 +51,14 @@ void heap::upheap(int k)
 {
     int i = a[k];
 
-    while ((k>1)&&(s[a[k/2]].nextevent.time > s[i].nextevent.time))
+    while ((k > 1) && (s[a[k/2]].nextevent.time > s[i].nextevent.time))
     {
         a[k] = a[k/2];
         index[a[k/2]] = k;
         k = k/2;
     }
+
     a[k] = i;
-    
     index[i] = k;
 }
 
@@ -67,22 +67,23 @@ void heap::upheap(int k)
 //==============================================================
 void heap::downheap(int k)
 {
-  int j;
-  int i = a[k];
-  
-  while(k <= N/2)
+    int j;
+    int i = a[k];
+
+    while (k <= N/2)
     {
-      j = k+k;
-      if ((j < N)&&(s[a[j]].nextevent.time > s[a[j+1]].nextevent.time))
-	j++;
-      if (s[i].nextevent.time <= s[a[j]].nextevent.time)
-	break;
-      a[k] = a[j];
-      index[a[j]] = k;
-      k = j;
+        j = k + k;
+        if ((j < N) && (s[a[j]].nextevent.time > s[a[j+1]].nextevent.time))
+            j++;
+        if (s[i].nextevent.time <= s[a[j]].nextevent.time)
+            break;
+        a[k] = a[j];
+        index[a[j]] = k;
+        k = j;
     }
-  a[k] = i;
-  index[i] = k;
+    
+    a[k] = i;
+    index[i] = k;
 }
 
 //==============================================================

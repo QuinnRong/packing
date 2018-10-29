@@ -24,7 +24,6 @@ public:
     int *index;     // array of indices for each sphere
     //event minevent;
 
-
     // functions which operate on a binary heap
     void upheap(int k);
     void downheap(int k);

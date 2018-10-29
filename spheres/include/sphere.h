@@ -20,7 +20,7 @@ public:
 
     // impending event
     event nextevent;                // next event...can be collision or transfer
-    event nextcollision;            // next collision if next event is transfer
+    // event nextcollision;         // next collision if next event is transfer
     // maybe nextnext event
 
     // past information
