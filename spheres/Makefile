@@ -21,9 +21,14 @@ $(TARGET):$(OBJS)
 $(OBJDIR)%.o:$(SRCDIR)%.C
 	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
+OUTDIR = ./output/
+ifeq ($(wildcard $(OUTDIR)), )
+$(shell mkdir -p $(OUTDIR))
+endif
+
 run:
 	./spheres.exe ./input/input.txt
 
 .PHONY:clean
 clean:
-	-rm -rf $(TARGET) bin output/*
+	-rm -rf $(TARGET) bin $(OUTDIR)*

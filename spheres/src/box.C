@@ -987,7 +987,7 @@ void box::WriteConfiguration(const char* wconfigfile)
   output << "0 1 ylo yhi\n";
   output << "0 1 zlo zhi\n\n";
   output << "Masses\n\n";
-  output << "1 1\n\n";
+  output << "1 " << r << "\n\n";
   output << "Atoms\n\n";
 
   // remember to get 16 digits of accuracy
