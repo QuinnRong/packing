@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "format_change.h"
+#include "discretize.h"
 
 GridField::GridField(double radius, int num)
 {
@@ -127,7 +127,7 @@ void SaveFile(const std::string& file, int* type, int dimX, int dimY, int dimZ)
 		{
 			for (int x = 0; x < dimX; ++x)
 			{
-				printf("%d %d %d %d %d\n", atomID + 1, type[atomID] + 1, x, y, z);
+				printf("%d %d %.1f %.1f %.1f\n", atomID + 1, type[atomID] + 1, x + 0.5, y + 0.5, z + 0.5);
 				++atomID;
 			}
 		}
@@ -238,8 +238,8 @@ void Box::get_structure(int res)
 				++atomID;
 			}
 		}
-		SaveFile(file, type, res, res, res);
 	}
+	SaveFile(file, type, res, res, res);
 
 	delete[] type;
 }

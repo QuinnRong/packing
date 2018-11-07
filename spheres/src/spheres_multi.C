@@ -28,14 +28,17 @@ int main(int argc, char **argv)
     int error = input.read(argc, argv);
     if (error) return error;
 
-    std::vector<double> pf = {0.3, 0.4, 0.5, 0.6};
+    std::vector<double> pf = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
+
+    std::ofstream summary("./output/summary.txt");
+    summary << "filename    N    radius     pf" << std::endl;
 
     for (int i = 0; i < pf.size(); ++i)
     {
         input.maxpf = pf[i];
         std::string writefile = "./output/struct_" + std::to_string(i) + ".dat";
         strcpy(input.writefile, writefile.c_str());
-        std::string datafile =  "./output/status_" + std::to_string(i) + ".dat";
+        std::string datafile =  "./output/statis_" + std::to_string(i) + ".dat";
         strcpy(input.datafile, datafile.c_str());
 
         double r = pow(input.initialpf*pow(SIZE, DIM)/(input.N*VOLUMESPHERE), 1.0/((double)(DIM)));
@@ -62,7 +65,8 @@ int main(int argc, char **argv)
             b.Synchronize(true);
         }
         std::cout << "\nfinal radius: " << b.r << std::endl;
-        output << "\nfinal radius: " << b.r << std::endl;
+        summary << "struct_" + std::to_string(i) + ".dat " << input.N << " " <<  b.r 
+                << " " << b.pf << " " << std::endl;
 
         output.close();
         b.WriteConfiguration(input.writefile);

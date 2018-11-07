@@ -1,13 +1,13 @@
 #include <string>
 #include <iostream>
 
-#include "format_change.h"
+#include "discretize.h"
 
 using namespace std;
 
 int main()
 {
-	double resolution = 100;
+	double resolution = 50;
 	
 	double radius = 0.106;
 	int num = 100;
@@ -19,8 +19,8 @@ int main()
 	// box.print_field();
 	box.get_structure(resolution);
 
-	// string direction = "y";
-	// double distance = 0;
+	string direction = "y";
+	double distance = 0;
 	// double resolution = 50;
-	// box.get_section(direction, distance, resolution);
+	box.get_section(direction, distance, resolution);
 }

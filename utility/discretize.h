@@ -1,5 +1,5 @@
-#ifndef FORMAT_CHANGE_H
-#define FORMAT_CHANGE_H
+#ifndef DISCRETIZE_H
+#define DISCRETIZE_H
 
 #include <string>
 
@@ -23,7 +23,7 @@ class Box
 {
 public:
 	Box(double r, int n);
-	Box(const std::string& filename, int n, int r);
+	Box(const std::string& fstruct, const std::string& fstatis);
 	~Box();
 
 	void get_field(const std::string& filename, int skip);
