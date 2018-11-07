@@ -1,9 +1,15 @@
 #include <fstream>
 #include <iostream>
+#include <unistd.h>		/* access */
+#include <cstdlib>		/* system */
 
 #include "discretize.h"
 
-GridField::GridField(double radius, int num)
+/*****
+class GridField
+*****/
+
+GridField::GridField(int num, double radius)
 {
 	ngrid = 1 / radius;
 	ncell = ngrid * ngrid * ngrid;
@@ -75,11 +81,18 @@ void GridField::print_data()
 	}
 }
 
-Box::Box(double r, int n): radius(r), num(n), field(r, n)
+/*****
+class Box
+*****/
+
+Box::Box(const std::string& filename, int n, double r)
+: num(n), radius(r), field(n, r)
 {
 	coords = new double*[num + 1];
 	for (int i = 0; i <= num; ++i)
 		coords[i] = new double[3];
+
+	get_field(filename);
 }
 
 Box::~Box()
@@ -87,7 +100,7 @@ Box::~Box()
 	delete[] coords;
 }
 
-void Box::get_field(const std::string& filename, int skip)
+void Box::get_field(const std::string& filename)
 {
 	std::ifstream ifs(filename);
 	std::string line;
@@ -108,17 +121,17 @@ void Box::get_field(const std::string& filename, int skip)
 
 void SaveFile(const std::string& file, int* type, int dimX, int dimY, int dimZ)
 {
-	freopen(file.c_str(), "w", stdout);
+	FILE *out = fopen(file.c_str(), "w");
 
-	printf("\n%d atoms\n\n", dimX*dimY*dimZ);
-	printf("2 atom types\n\n");
-	printf("0 %d xlo xhi\n", dimX);
-	printf("0 %d ylo yhi\n", dimY);
-	printf("0 %d zlo zhi\n\n", dimZ);
-	printf("Masses\n\n");
-	printf("1 1\n");
-	printf("2 2\n\n");
-	printf("Atoms\n\n");
+	fprintf(out, "\n%d atoms\n\n", dimX*dimY*dimZ);
+	fprintf(out, "2 atom types\n\n");
+	fprintf(out, "0 %d xlo xhi\n", dimX);
+	fprintf(out, "0 %d ylo yhi\n", dimY);
+	fprintf(out, "0 %d zlo zhi\n\n", dimZ);
+	fprintf(out, "Masses\n\n");
+	fprintf(out, "1 1\n");
+	fprintf(out, "2 2\n\n");
+	fprintf(out, "Atoms\n\n");
 
 	int atomID = 0;
 	for (int z = 0; z < dimZ; ++z)
@@ -127,13 +140,13 @@ void SaveFile(const std::string& file, int* type, int dimX, int dimY, int dimZ)
 		{
 			for (int x = 0; x < dimX; ++x)
 			{
-				printf("%d %d %.1f %.1f %.1f\n", atomID + 1, type[atomID] + 1, x + 0.5, y + 0.5, z + 0.5);
+				fprintf(out, "%d %d %.1f %.1f %.1f\n", atomID + 1, type[atomID] + 1, x + 0.5, y + 0.5, z + 0.5);
 				++atomID;
 			}
 		}
 	}
 
-	fclose(stdout);
+	fclose(out);
 }
 
 double distance_square(double* curr, double* coor, double* pboffset)
@@ -199,32 +212,58 @@ bool Box::in_sphere(double x, double y, double z)
     return false;
 }
 
-void Box::get_section(std::string dir, double dis, int res)
+void Box::get_section(const std::string& filename, std::string dir, double dis, int res)
 {
-	std::string file = dir;
-	file += "_" + std::to_string(dis) + "_" + std::to_string(res) + ".txt";
+	std::string file = filename;
+	file += dir + "_" + std::to_string(dis) + "_" + std::to_string(res) + ".txt";
 	int* type = new int[res*res];
 
-	if (dir == "y")
+	if (dir == "x")
+	{
+		int atomID = 0;
+		for (int z = 0; z < res; ++z)
+		{
+			for (int y = 0; y < res; ++y)
+			{
+				type[atomID] = in_sphere(dis, y * 1.0 / res, z * 1.0 / res) ? 1 : 0;
+				++atomID;
+			}
+		}
+		SaveFile(file, type, 1, res, res);
+	}
+	else if (dir == "y")
 	{
 		int atomID = 0;
 		for (int z = 0; z < res; ++z)
 		{
 			for (int x = 0; x < res; ++x)
 			{
-				type[atomID] = in_sphere(x * 1.0 / res, 0, z * 1.0 / res) ? 1 : 0;
+				type[atomID] = in_sphere(x * 1.0 / res, dis, z * 1.0 / res) ? 1 : 0;
 				++atomID;
 			}
 		}
 		SaveFile(file, type, res, 1, res);
 	}
+	else if (dir == "z")
+	{
+		int atomID = 0;
+		for (int y = 0; y < res; ++y)
+		{
+			for (int x = 0; x < res; ++x)
+			{
+				type[atomID] = in_sphere(x * 1.0 / res, y * 1.0 / res, dis) ? 1 : 0;
+				++atomID;
+			}
+		}
+		SaveFile(file, type, res, res, 1);
+	}
 
 	delete[] type;
 }
 
-void Box::get_structure(int res)
+void Box::get_structure(const std::string& filename, int res)
 {
-	std::string file = std::to_string(res) + ".txt";
+	std::string file = filename;
 	int* type = new int[res*res*res];
 
 	int atomID = 0;
@@ -242,4 +281,47 @@ void Box::get_structure(int res)
 	SaveFile(file, type, res, res, res);
 
 	delete[] type;
+}
+
+void make_directory(const std::string &path)
+{
+    // path not exist
+    if (access(path.c_str(), 0) == -1)
+    {
+        std::string cmd = "mkdir " + path;
+        system(cmd.c_str());
+    }
+}
+
+void delete_directory(const std::string &path)
+{
+    // path exist
+    if (access(path.c_str(), 0) == 0)
+    {
+        std::string cmd = "rm -rf " + path;
+        system(cmd.c_str());
+    }
+}
+
+void Box::get_fenics_input(const std::string& root, int idx, int res)
+{
+    // mkdir
+    std::string path = root + std::to_string(idx);
+    delete_directory(path);
+    make_directory(path);
+    // save to file
+    for (int z = 0; z < res; ++z)
+    {
+        std::string filename = path + "/3D_" + std::to_string(idx) + "_" + std::to_string(z) + ".dat";
+        std::ofstream out(filename);
+        for (int y = 0; y < res; ++y)
+        {
+            for (int x = 0; x < res; ++x)
+            {
+                out << (in_sphere(x * 1.0 / res, y * 1.0 / res, z * 1.0 / res) ? 1 : 0) << " ";
+            }
+            out << std::endl;
+        }
+        out.close();
+    }
 }

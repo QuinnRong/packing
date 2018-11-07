@@ -3,10 +3,13 @@
 
 #include <string>
 
+#define SPT "\\"		// for windows
+// #define SPT "/"		// for linux
+
 class GridField
 {
 public:
-	GridField(double radius, int num);
+	GridField(int num, double radius);
 	~GridField();
 
 	int get_cell(double x, double y, double z);
@@ -22,22 +25,24 @@ public:
 class Box
 {
 public:
-	Box(double r, int n);
-	Box(const std::string& fstruct, const std::string& fstatis);
+	Box(const std::string& filename, int n, double r);
 	~Box();
 
-	void get_field(const std::string& filename, int skip);
 	void print_field() { field.print_field(); };
 	void print_data() { field.print_data(); };
 
-	void get_section(std::string dir, double dis, int res);
-	void get_structure(int res);
+	void get_section(const std::string& filename, std::string dir, double dis, int res);
+	void get_structure(const std::string& filename, int res);
+
+	void get_fenics_input(const std::string& path, int idx, int res);
 
 private:
+	void get_field(const std::string& filename);
 	bool in_sphere(double x, double y, double z);
 
-	double radius;
 	int num;
+	double radius;
+	int skip = 15;		// # of lines before coords in struct file
 	double** coords;
 	GridField field;
 };
