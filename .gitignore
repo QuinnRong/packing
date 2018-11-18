@@ -6,3 +6,6 @@ packing-generation
 *bk
 *.exe
 *output
+*.PNG
+*.vtu
+*.pvd
