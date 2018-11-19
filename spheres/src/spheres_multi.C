@@ -1,54 +1,38 @@
-//===========================================================
-//===========================================================
-//===========================================================
-//
-//  Molecular dynamics simulation of hardspheres
-//
-//===========================================================
-//===========================================================
-//===========================================================
-
-#include <iostream>
-#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <fstream>
 #include <vector>
-#include <time.h>
 #include <string.h>
 
 #include "box.h"
-#include "sphere.h"
-#include "event.h"
-#include "heap.h"
 #include "read_input.h"
 
+double rand_range(double r1, double r2)
+{
+    double tmp = rand() * 1.0 / RAND_MAX;
+    return r1 + tmp * (r2 -r1);
+}
 
 int main(int argc, char **argv)
 {
     read_input input;
-    int error = input.read(argc, argv);
-    if (error) return error;
-
-    std::vector<double> pf = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6};
+    input.read(argc, argv);
 
     std::ofstream summary("./output/summary.txt");
     summary << "filename    N    radius     pf" << std::endl;
 
-    for (int i = 0; i < pf.size(); ++i)
+    srand (time(NULL));
+    for (int i = 0; i < 500; ++i)
     {
-        input.maxpf = pf[i];
-        std::string writefile = "./output/struct_" + std::to_string(i) + ".dat";
-        strcpy(input.writefile, writefile.c_str());
-        std::string datafile =  "./output/statis_" + std::to_string(i) + ".dat";
-        strcpy(input.datafile, datafile.c_str());
+        input.maxpf = rand_range(0.1, 0.6);
+
+        sprintf(input.writefile, "./output/struct_%d.dat", i);
+        sprintf(input.datafile, "./output/statis_%d.dat", i);
 
         double r = pow(input.initialpf*pow(SIZE, DIM)/(input.N*VOLUMESPHERE), 1.0/((double)(DIM)));
 
         box b(input.N, r, input.growthrate, input.maxpf);
 
-        std::cout << "ngrids = " << b.ngrids << std::endl;
-        std::cout << "DIM = " << DIM << std::endl;
-
-        std::cout << "Creating new positions of spheres" << std::endl;
         b.CreateSpheres(input.temp);
 
         std::ofstream output(input.datafile);
@@ -58,19 +42,21 @@ int main(int argc, char **argv)
         int step = 0;
         while ((b.pf < input.maxpf) && (b.pressure < input.maxpressure)) 
         {
-            std::cout << "step = " << step << " pf = " << b.pf << " pressure = " << b.pressure << std::endl;
+            // printf("step = %4d, pf = %.4f, pressure = %.4f\n", step, b.pf, b.pressure);
             b.Process(input.eventspercycle*input.N);
             output << step++ << " " << b.pf << " " << b.pressure << " "
                    << b.energychange << " " << b.neventstot << " " << std::endl;
             b.Synchronize(true);
         }
-        std::cout << "\nfinal radius: " << b.r << std::endl;
-        summary << "struct_" + std::to_string(i) + ".dat " << input.N << " " <<  b.r 
+        printf("\n%d: %.4f -> final radius: %.6f\n", i, input.maxpf, b.r);
+        summary << "struct_" << i << ".dat " << input.N << " " <<  b.r 
                 << " " << b.pf << " " << std::endl;
 
         output.close();
         b.WriteConfiguration(input.writefile);
     }
+
+    summary.close();
 
     return 0;
 }

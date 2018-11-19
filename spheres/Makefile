@@ -26,8 +26,14 @@ ifeq ($(wildcard $(OUTDIR)), )
 $(shell mkdir -p $(OUTDIR))
 endif
 
-run:
+run_windows:
 	./spheres.exe ./input/input.txt
+
+run_hpc:
+	./spheres ./input/input.txt
+
+run:
+	sbatch spheres.slurm
 
 .PHONY:clean
 clean:
