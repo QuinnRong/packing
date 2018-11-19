@@ -51,20 +51,20 @@ class Left_x0(SubDomain):
 
 
 imported_kappa = True
-dim = 50
+dim = 100
 print(dim)
 TC = [1, 10]
 epsilon = 1e-12
 ndim = 3 #2D or 3D problem
 
-for idx in range(0, 100):
-    dump_file = open("../structure/rand-50-0.250000/result.txt", "a")
+for idx in range(0, 6):
+    dump_file = open("./result.txt", "a")
 #----------------------------------------------------------------------------
 # import the kappa
 #----------------------------------------------------------------------------
     time_start=time.time()
     if imported_kappa:
-        dirname = "../structure/rand-50-0.250000/" + str(int(idx))
+        dirname = "./" + str(int(idx))
         #check directory exists
         if(os.path.exists(dirname)):
             print("Directory Exists")

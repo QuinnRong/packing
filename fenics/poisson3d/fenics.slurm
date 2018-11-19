@@ -15,4 +15,4 @@ module use /lustre/usr/modulefiles
 module load miniconda2/4.3
 
 source activate fenicsproject
-python Poisson3D_Mostafa_quinn.py
+python poisson3d.py

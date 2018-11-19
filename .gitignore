@@ -9,3 +9,6 @@ packing-generation
 *.PNG
 *.vtu
 *.pvd
+*.err
+*.out
+*.opj
