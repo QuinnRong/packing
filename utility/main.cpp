@@ -8,9 +8,10 @@ using namespace std;
 
 int main()
 {
-	string root = "..";
-	string input_dir  = root + SPT + "spheres" + SPT + "output" + SPT;
-	string output_dir = root + SPT + "utility" + SPT + "output" + SPT;
+	string root = "../..";
+	string input_dir  = root + SPT + "spheres" + SPT + "run_2_train/output" + SPT;
+	string output_dir = root + SPT + "utility" + SPT + "run_2_train/output" + SPT;
+	make_directory(output_dir);
 	int resolution    = 100;
 
 	ifstream ifs(input_dir + "summary.txt");
@@ -25,7 +26,8 @@ int main()
 
 		// box.get_structure(output_dir + file, resolution);
 
-		box.get_fenics_input(output_dir, idx++, resolution);
+		// box.get_fenics_input(output_dir, idx++, resolution);
+		box.get_fenics_input_single_file(output_dir, idx++, resolution);
 
 		// box.get_section(output_dir + file, "x", 0, resolution);
 		// box.get_section(output_dir + file, "y", 0, resolution);

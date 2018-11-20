@@ -325,3 +325,22 @@ void Box::get_fenics_input(const std::string& root, int idx, int res)
         out.close();
     }
 }
+
+void Box::get_fenics_input_single_file(const std::string& root, int idx, int res)
+{
+    // save to file
+    std::string filename = root + "3D_" + std::to_string(idx) + ".dat";
+    std::ofstream out(filename);
+    for (int z = 0; z < res; ++z)
+    {
+        for (int y = 0; y < res; ++y)
+        {
+            for (int x = 0; x < res; ++x)
+            {
+                out << (in_sphere(x * 1.0 / res, y * 1.0 / res, z * 1.0 / res) ? 1 : 0) << " ";
+            }
+            out << std::endl;
+        }
+    }
+    out.close();
+}

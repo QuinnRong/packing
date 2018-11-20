@@ -3,8 +3,8 @@
 
 #include <string>
 
-#define SPT "\\"		// for windows
-// #define SPT "/"		// for linux
+// #define SPT "\\"		// for windows
+#define SPT "/"		// for linux
 
 class GridField
 {
@@ -35,6 +35,7 @@ public:
 	void get_structure(const std::string& filename, int res);
 
 	void get_fenics_input(const std::string& path, int idx, int res);
+	void get_fenics_input_single_file(const std::string& path, int idx, int res);
 
 private:
 	void get_field(const std::string& filename);
@@ -46,5 +47,8 @@ private:
 	double** coords;
 	GridField field;
 };
+
+void make_directory(const std::string &path);
+void delete_directory(const std::string &path);
 
 #endif

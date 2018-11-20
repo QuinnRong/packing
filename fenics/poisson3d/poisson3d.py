@@ -3,11 +3,13 @@ import numpy as np
 import time
 
 # global parameters
-dim = 100
+dirname = "../../utility/run_1_valid/output"
+num_cases = 500
+resolution = 100
 TC = [1, 10]
 
-nscale = 2
-ngrids = dim*nscale
+nscale = 1
+ngrids = resolution*nscale
 
 linear_solver = 'Krylov'
 err_rt = 1e-6
@@ -17,7 +19,7 @@ types = {1:{"dim":2,"num_per_cell":2,"type":CellType.Type_triangle},
          2:{"dim":2,"num_per_cell":1,"type":CellType.Type_quadrilateral},
          3:{"dim":3,"num_per_cell":6,"type":CellType.Type_tetrahedron},
          4:{"dim":3,"num_per_cell":1,"type":CellType.Type_hexahedron}}
-cell_type = types[4]
+cell_type = types[3]
 
 # Sub domain for Periodic boundary condition
 class PeriodicBoundary(SubDomain):
@@ -101,12 +103,8 @@ def GetPrm():
     return prm
 
 def GetKappa(idx):
-    dirname = "./" + str(int(idx))
-    kappa_input = []
-    for j in range(0, dim): 
-        filename = dirname+"/3D_"+str(int(idx))+"_"+str(int(j))+".dat"
-        kappa_layer = np.loadtxt(filename, unpack=True).ravel()
-        kappa_input = np.append(kappa_input, kappa_layer)
+    filename = dirname + "/3D_" + str(int(idx)) + ".dat"
+    kappa_input = np.loadtxt(filename, unpack=False).ravel()
 
     volume_fraction = 0
     for index in range(kappa_input.size):
@@ -115,7 +113,7 @@ def GetKappa(idx):
         else:
             kappa_input[index] = TC[1]
             volume_fraction += 1
-    print("volume_fraction = ", volume_fraction*1.0/dim**3)
+    print("volume_fraction = ", volume_fraction*1.0/resolution**3)
 
     materials = MeshFunction("double", mesh, mesh.geometry().dim())
     for (i, cell) in enumerate(cells(mesh)):
@@ -141,7 +139,7 @@ def GetKappa(idx):
 log_file = open("./result.log", "w")
 dump_file = open("./result.txt", "w")
 
-for idx in range(0, 6):
+for idx in range(0, num_cases):
     time_start = time.time()
     # Define variational problem
     kappa = GetKappa(idx)
