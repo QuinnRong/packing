@@ -13,3 +13,4 @@ packing-generation
 *.err
 *.out
 *.opj
+cnn/cnn_*
