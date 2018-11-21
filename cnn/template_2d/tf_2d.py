@@ -5,8 +5,8 @@ import time
 import math
 
 # global parameters
-resolution = 100
-dp_parm = 0.5
+resolution = 100    # input resulation
+dp_parm = 1.0       # keep probability of dropout
 
 class Param:
     def __init__(self, label, struc, start, end):
@@ -15,8 +15,8 @@ class Param:
         self.start = start
         self.end   = end
 
-valid_param = Param("../../fenics/run_1_valid", "../../utility/run_1_valid/output", 0, 299)
-train_param = Param("../../fenics/run_2_train", "../../utility/run_2_train/output", 0, 1199)
+valid_param = Param("../../fenics/run_1_valid", "../../utility/run_1_valid/output", 0, 199)
+train_param = Param("../../fenics/run_2_train", "../../utility/run_2_train/output", 0, 799)
 
 def get_label(filename, start, end):
     '''
@@ -115,7 +115,7 @@ def get_all_data():
     print("\nX_train: ", train_struc.shape, file = log_file)
     print("y_train: ", train_label.shape, file = log_file)
     print(time_end-time_start, file = log_file)
-    log_file = open("log.txt", "a")
+    log_file.close()
     # normalize to mean 0, std 1
     mean, std = np.mean(train_label), np.std(train_label)
     train_label = (train_label - mean) / std
@@ -126,52 +126,56 @@ def get_all_data():
     log_file.close()
     return valid_struc, valid_label, train_struc, train_label
 
-def complex_model(X, is_training, channels, keep_prob):
+def complex_model(X, is_training, channels, keep_prob, name):
     # define weight
-    Wconv1 = tf.get_variable("Wconv1", shape=[5, 5, channels, 32])
-    bconv1 = tf.get_variable("bconv1", shape=[32])
-    Wconva = tf.get_variable("Wconva", shape=[3, 3, 32, 32])
-    bconva = tf.get_variable("bconva", shape=[32])
-    Wconv2 = tf.get_variable("Wconv2", shape=[3, 3, 32, 64])
-    bconv2 = tf.get_variable("bconv2", shape=[64])
-    Wconvb = tf.get_variable("Wconvb", shape=[3, 3, 64, 64])
-    bconvb = tf.get_variable("bconvb", shape=[64])
-    Wconv3 = tf.get_variable("Wconv3", shape=[3, 3, 64, 128])
-    bconv3 = tf.get_variable("bconv3", shape=[128])
+    Wconv1 = tf.get_variable("Wconv1", shape=[5, 5, channels, 64])
+    bconv1 = tf.get_variable("bconv1", shape=[64])
+    Wconva = tf.get_variable("Wconva", shape=[3, 3, 64, 64])
+    bconva = tf.get_variable("bconva", shape=[64])
+    Wconv2 = tf.get_variable("Wconv2", shape=[3, 3, 64, 128])
+    bconv2 = tf.get_variable("bconv2", shape=[128])
+    Wconvb = tf.get_variable("Wconvb", shape=[3, 3, 128, 128])
+    bconvb = tf.get_variable("bconvb", shape=[128])
+    Wconv3 = tf.get_variable("Wconv3", shape=[3, 3, 128, 256])
+    bconv3 = tf.get_variable("bconv3", shape=[256])
     # fc1
-    Wfc1   = tf.get_variable("Wfc1", shape=[4*4*128,256])
+    Wfc1   = tf.get_variable("Wfc1", shape=[4*4*256,512])
     # fc2
-    Wfc2   = tf.get_variable("Wfc2", shape=[256,1])
+    Wfc2   = tf.get_variable("Wfc2", shape=[512,1])
     
     #define graph
     conv1 = tf.nn.conv2d(X,Wconv1,[1,2,2,1],padding="SAME") + bconv1
     conv1_norm = tf.layers.batch_normalization(conv1, training=is_training)
     relu1 = tf.nn.relu(conv1_norm)
     ## 100->50
-    conva = tf.nn.conv2d(relu1,Wconva,[1,2,2,1],padding="SAME") + bconva
+    conva = tf.nn.conv2d(relu1,Wconva,[1,1,1,1],padding="SAME") + bconva
     conva_norm = tf.layers.batch_normalization(conva, training=is_training)
     relua = tf.nn.relu(conva_norm)
+
+    pool1 = tf.nn.max_pool(relua,[1,2,2,1],padding="SAME",strides=[1,2,2,1])
     ## 50->25
 
-    conv2 = tf.nn.conv2d(relua,Wconv2,[1,2,2,1],padding="SAME") + bconv2
+    conv2 = tf.nn.conv2d(pool1,Wconv2,[1,2,2,1],padding="SAME") + bconv2
     conv2_norm = tf.layers.batch_normalization(conv2, training=is_training)
     relu2 = tf.nn.relu(conv2_norm)
     ## 25->13
-    convb = tf.nn.conv2d(relu2,Wconvb,[1,2,2,1],padding="SAME") + bconvb
+    convb = tf.nn.conv2d(relu2,Wconvb,[1,1,1,1],padding="SAME") + bconvb
     convb_norm = tf.layers.batch_normalization(convb, training=is_training)
     relub = tf.nn.relu(convb_norm)
+
+    pool2 = tf.nn.max_pool(relub,[1,2,2,1],padding="SAME",strides=[1,2,2,1])
     ## 13->7
  
-    conv3 = tf.nn.conv2d(relub,Wconv3,[1,2,2,1],padding="SAME") + bconv3
+    conv3 = tf.nn.conv2d(pool2,Wconv3,[1,2,2,1],padding="SAME") + bconv3
     conv3_norm = tf.layers.batch_normalization(conv3, training=is_training)
     relu3 = tf.nn.relu(conv3_norm)
     ## 7->4
 
-    dp = tf.nn.dropout(relu3, keep_prob)
-    flat  = tf.reshape(dp,[-1,4*4*128])
+    dp   = tf.nn.dropout(relu3, keep_prob)
+    flat  = tf.reshape(dp,[-1,4*4*256])
     fc1   = tf.matmul(flat,Wfc1)
     reluf = tf.nn.relu(fc1)
-    fc2   = tf.matmul(reluf,Wfc2)
+    fc2   = tf.matmul(reluf,Wfc2, name=name)
     
     return fc2[:, 0]
 
@@ -195,7 +199,7 @@ def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, fee
     loss_min = 0.3
     for e in range(epochs):
         # keep track of losses and accuracy
-        loss_trai = 0
+        loss_train = 0
         y_pred_train = []
         for i in range(int(math.ceil(Xd.shape[0]/batch_size))):
             # generate indicies for the batch
@@ -207,25 +211,25 @@ def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, fee
             actual_batch_size = yd[idx].shape[0]
             # have tensorflow compute losses and predictions and do gradient decent
             loss, y_pred, _ = sess.run(variables_train,feed_dict=feed_dict_train)
-            loss_trai += loss*loss*actual_batch_size
+            loss_train += loss*loss*actual_batch_size
             y_pred_train.extend(list(y_pred))
             time_end=time.time()
             print("{0:5d} {1:5d} {2:8.1f} {3:7.3f}".format(e, i, time_end-time_start, loss), file = log_file)
             log_file.close()
             log_file = open("log.txt", "a")
-        loss_trai = np.sqrt(loss_trai/Xd.shape[0])
+        loss_train = np.sqrt(loss_train/Xd.shape[0])
         # testing results
-        loss_test, y_pred_valid = sess.run(variables_valid, feed_dict=feed_dict_valid)
+        loss_valid, y_pred_valid = sess.run(variables_valid, feed_dict=feed_dict_valid)
         # save training and testing results
-        print("Epoch {0:5d} training loss = {1:7.3f} testing loss = {2:7.3f}".format(e + 1, loss_trai, loss_test), file = los_file)
+        print("Epoch {0:5d} training loss = {1:7.3f} testing loss = {2:7.3f}".format(e + 1, loss_train, loss_valid), file = los_file)
+        los_file.close()
+        los_file = open("los.txt", "a")
         # save the model
-        if (e > 50 and loss_test < loss_min):
-            loss_min = loss_test
+        if (e > 50 and loss_valid < loss_min):
+            loss_min = loss_valid
             saver.save(sess, "Model/model.ckpt"+str(e))
             np.savetxt("y_valid_best.txt", y_pred_valid, fmt = '%.4f')
             np.savetxt("y_train_best.txt", y_pred_train, fmt = '%.4f')
-            los_file.close()
-            los_file = open("los.txt", "a")
     log_file.close()
     los_file.close()
 
@@ -233,14 +237,14 @@ def main():
     # testing data and training data
     valid_struc, valid_label, train_struc, train_label = get_all_data()
     # placeholders
-    X = tf.placeholder(tf.float32, [None, resolution, resolution, valid_struc.shape[-1]])
-    y = tf.placeholder(tf.float32, [None])
-    is_training = tf.placeholder(tf.bool)
-    keep_prob = tf.placeholder(tf.float32)
+    X = tf.placeholder(tf.float32, [None, resolution, resolution, valid_struc.shape[-1]], name="X")
+    y = tf.placeholder(tf.float32, [None], name="y")
+    is_training = tf.placeholder(tf.bool, name="is_training")
+    keep_prob = tf.placeholder(tf.float32, name="keep_prob")
     # graph
-    y_pred = complex_model(X, is_training, valid_struc.shape[-1], keep_prob)
+    y_pred = complex_model(X, is_training, valid_struc.shape[-1], keep_prob, name="y_pred")
     # loss
-    loss = tf.sqrt(tf.losses.mean_squared_error(y_pred, y))
+    loss = tf.sqrt(tf.losses.mean_squared_error(y_pred, y), name="loss")
     # optimizer
     optimizer = tf.train.RMSPropOptimizer(1e-3)
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)

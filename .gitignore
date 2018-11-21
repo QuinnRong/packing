@@ -14,3 +14,4 @@ packing-generation
 *.out
 *.opj
 cnn/cnn_*
+cnn/2d*
