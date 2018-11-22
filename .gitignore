@@ -1,6 +1,3 @@
-mono
-poly
-packing-generation
 *bin
 *html
 *bk
@@ -14,4 +11,4 @@ packing-generation
 *.out
 *.opj
 cnn/cnn_*
-cnn/2d*
+cnn/compare*

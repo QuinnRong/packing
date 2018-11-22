@@ -14,7 +14,7 @@ class Param:
         self.start = start
         self.end   = end
 
-test_param = Param("../../fenics/run_1_valid", "../../utility/run_1_valid/output", 0, 199)
+test_param = Param("../../fenics/run_3_test", "../../utility/run_3_test/output", 0, 199)
 
 def get_label(filename, start, end):
     '''
@@ -115,23 +115,19 @@ def get_all_data():
     time_start=time.time()
     test_struc, test_label = get_tf_input(test_param.label, test_param.struc, test_param.start, test_param.end, dire, dist)
     time_end=time.time()
-    print("\nX_test: ", test_struc.shape)
-    print("y_test: ", test_label.shape)
-    print(time_end-time_start)
-    mean, std = get_mean_std("log.txt", 9)
-    test_label = (test_label - mean) / std 
-    np.savetxt("y_test.txt", test_label, fmt = '%.4f')
+    log_file = open("log.txt", "a")
+    print("\nX_test: ", test_struc.shape, file=log_file)
+    print("y_test: ", test_label.shape, file=log_file)
+    print(time_end-time_start, file=log_file)
+    log_file.close()
     return test_struc, test_label
-
-def run_test(sess, variables, feed_dict):
-    loss, y_pred = sess.run(variables, feed_dict=feed_dict)
-    np.savetxt("y_test_pred.txt", y_pred, fmt = '%.4f')
-    print(loss)
-    return loss
 
 def main():
     # testing data
     test_struc, test_label = get_all_data()
+    mean, std = get_mean_std("log.txt", 9)
+    test_label = (test_label - mean) / std 
+    np.savetxt("y_test.txt", test_label, fmt = '%.5f')
     # run tensorflow
     with tf.Session() as sess:
         saver = tf.train.import_meta_graph(model_file + ".meta")
@@ -148,7 +144,14 @@ def main():
         variables_test = [loss, y_pred[:,0]]
         feed_dict_test = {X: test_struc, y: test_label, is_training: True, keep_prob: 1}
 
-        run_test(sess, variables_test, feed_dict_test)
+        loss, y_pred = sess.run(variables_test, feed_dict=feed_dict_test)
+        np.savetxt("y_test_pred.txt", y_pred, fmt = '%.5f')
+        mae = np.mean(np.abs(y_pred - test_label))
+
+        log_file = open("log.txt", "a")
+        print("\nloss = ", loss, file=log_file)
+        print("mean absolute error = ", mae * std / mean, file=log_file)
+        log_file.close()
 
 if __name__ == '__main__':
     sys.exit(main())

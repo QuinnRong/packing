@@ -15,8 +15,8 @@ class Param:
         self.start = start
         self.end   = end
 
-valid_param = Param("../../fenics/run_1_valid", "../../utility/run_1_valid/output", 0, 199)
-train_param = Param("../../fenics/run_2_train", "../../utility/run_2_train/output", 0, 799)
+valid_param = Param("../../../fenics/run_1_valid", "../../../utility/run_1_valid/output", 0, 199)
+train_param = Param("../../../fenics/run_2_train", "../../../utility/run_2_train/output", 0, 799)
 
 def get_label(filename, start, end):
     '''
@@ -124,7 +124,7 @@ def get_all_data():
     log_file = open("log.txt", "a")
     print("mean = {0:.6g}, std = {1:.6g}".format(mean, std), file = log_file)
     log_file.close()
-    return valid_struc, valid_label, train_struc, train_label
+    return valid_struc, valid_label, train_struc, train_label, mean, std
 
 def complex_model(X, is_training, channels, keep_prob, name):
     # define weight
@@ -183,7 +183,7 @@ def run_valid(sess, variables, feed_dict):
     loss, y_pred = sess.run(variables, feed_dict=feed_dict)
     return loss
 
-def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, epochs=1, batch_size=100):
+def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, mean, std, epochs, batch_size):
     log_file = open("log.txt", "a")
     los_file = open("los.txt", "a")
     print("\nTraining", file = log_file)
@@ -192,11 +192,11 @@ def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, fee
     Xd, yd = feed_dict_train[X], feed_dict_train[y]
     train_indicies = np.arange(Xd.shape[0])
     np.random.shuffle(train_indicies)
-    np.savetxt("y_train.txt", yd[train_indicies], fmt = '%.4f')
-    np.savetxt("y_valid.txt", feed_dict_valid[y], fmt = '%.4f')
+    np.savetxt("y_train.txt", yd[train_indicies], fmt = '%.5f')
+    np.savetxt("y_valid.txt", feed_dict_valid[y], fmt = '%.5f')
     # iterate over epoches
     time_start=time.time()
-    loss_min = 0.3
+    mae_min = 0.5
     for e in range(epochs):
         # keep track of losses and accuracy
         loss_train = 0
@@ -218,24 +218,26 @@ def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, fee
             log_file.close()
             log_file = open("log.txt", "a")
         loss_train = np.sqrt(loss_train/Xd.shape[0])
-        # testing results
+        # validating results
         loss_valid, y_pred_valid = sess.run(variables_valid, feed_dict=feed_dict_valid)
-        # save training and testing results
-        print("Epoch {0:5d} training loss = {1:7.3f} testing loss = {2:7.3f}".format(e + 1, loss_train, loss_valid), file = los_file)
+        mae = np.mean(np.abs(y_pred_valid - feed_dict_valid[y]))
+        mae = mae * std / mean
+        # save training and validating results
+        print("Epoch{0:5d} trainloss={1:6.3f} validloss={2:6.3f} mae={3:8.5f}".format(e+1,loss_train,loss_valid,mae), file=los_file)
         los_file.close()
         los_file = open("los.txt", "a")
         # save the model
-        if (e > 50 and loss_valid < loss_min):
-            loss_min = loss_valid
+        if (e > 100 and mae < mae_min):
+            mae_min = mae
             saver.save(sess, "Model/model.ckpt"+str(e))
-            np.savetxt("y_valid_best.txt", y_pred_valid, fmt = '%.4f')
-            np.savetxt("y_train_best.txt", y_pred_train, fmt = '%.4f')
+            np.savetxt("y_valid_best.txt", y_pred_valid, fmt = '%.5f')
+            np.savetxt("y_train_best.txt", y_pred_train, fmt = '%.5f')
     log_file.close()
     los_file.close()
 
 def main():
     # testing data and training data
-    valid_struc, valid_label, train_struc, train_label = get_all_data()
+    valid_struc, valid_label, train_struc, train_label, mean, std = get_all_data()
     # placeholders
     X = tf.placeholder(tf.float32, [None, resolution, resolution, valid_struc.shape[-1]], name="X")
     y = tf.placeholder(tf.float32, [None], name="y")
@@ -266,7 +268,7 @@ def main():
         print("\nvalid loss:", run_valid(sess, variables_valid, feed_dict_valid), file = log_file)
         log_file.close()
         # train the model
-        run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, 500, 100)
+        run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, mean, std, 500, 100)
 
 if __name__ == '__main__':
     sys.exit(main())
