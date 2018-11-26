@@ -3,11 +3,10 @@ import numpy as np
 import time, os
 
 # global parameters
-input_dir  = "../../utility/run_1_valid/output"
-output_dir = "../../fenics/run_1_valid/output"
-section    = 0
-id_range   = [section*100, (section+1)*100]
-resolution = 100
+input_dir  = "../../utility/run_0_mesh_test/output_25"
+output_dir = "../../fenics/run_0_mesh_test/output_25_T4G50_nt"
+num_cases  = 6
+resolution = 25
 TC = [1, 10]
 
 nscale = 2
@@ -151,22 +150,24 @@ def GetKappa(idx):
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
-log_file = open(output_dir+"/result_"+str(section)+".log", "w")
-dump_file = open(output_dir+"/result_"+str(section)+".txt", "w")
+log_file = open(output_dir + "/result.log", "w")
+dump_file = open(output_dir + "/result.txt", "w")
 
-for idx in range(id_range[0], id_range[1]):
+for idx in range(0, num_cases):
     time_start = time.time()
     # Define variational problem
     kappa = GetKappa(idx)
-    u = TrialFunction(V)
+    u = Function(V)
     v = TestFunction(V)
     f = Constant(0.0)
     a = dot(kappa*grad(u), grad(v))*dx
     L = f*v*dx
     # Compute solution
-    u = Function(V)
     prm = GetPrm()
-    solve(a == L, u, bcs, solver_parameters=prm)
+    F = a - L
+    solve(F == 0, u, bcs,solver_parameters={"newton_solver":{"relative_tolerance":1e-4},
+                   "newton_solver":{"absolute_tolerance":1e-6},
+                   "newton_solver":{"linear_solver":"mumps"}})
 
     # Evaluate integral of normal gradient over top boundary
     n = FacetNormal(mesh)
@@ -190,12 +191,12 @@ for idx in range(id_range[0], id_range[1]):
 
     dump_file.write("%4d%10.6f\n" % (idx, (top - bottom) / 2))
     dump_file.close()
-    dump_file = open(output_dir+"/result_"+str(section)+".txt", "a")
+    dump_file = open(output_dir + "/result.txt", "a")
 
     time_end = time.time()
     log_file.write("%4d time cost: %f\n\n" % (idx, time_end - time_start))
     log_file.close()
-    log_file = open(output_dir+"/result_"+str(section)+".log", "a")
+    log_file = open(output_dir + "/result.log", "a")
 
 log_file.close()
 dump_file.close()

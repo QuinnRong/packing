@@ -14,8 +14,8 @@ class Param:
         self.start = start
         self.end   = end
 
-valid_param = Param("../../fenics/run_1_valid", "../../utility/run_1_valid/output", 0, 99)
-train_param = Param("../../fenics/run_1_valid", "../../utility/run_1_valid/output", 100, 499)
+valid_param = Param("../../../fenics/run_1_valid", "../../../utility/run_1_valid/output", 0, 199)
+train_param = Param("../../../fenics/run_2_train", "../../../utility/run_2_train/output", 0, 799)
 
 def get_label(filename, start, end):
     '''
@@ -97,13 +97,11 @@ def get_all_data():
     valid_label = (valid_label - mean) / std
     # save results
     log_file = open("log.txt", "a")
-    print("mean = {0:.3g}, std = {1:.3g}".format(mean, std), file = log_file)
+    print("mean = {0:.6g}, std = {1:.6g}".format(mean, std), file = log_file)
     log_file.close()
-    np.savetxt("y_valid.txt", valid_label, fmt = '%.4f')
-    np.savetxt("y_train.txt", train_label, fmt = '%.4f')
-    return valid_struc, valid_label, train_struc, train_label
+    return valid_struc, valid_label, train_struc, train_label, mean, std
 
-def complex_model(X, is_training):
+def complex_model(X, is_training, name):
     # define weight
     Wconv1 = tf.get_variable("Wconv1", shape=[3, 3, 3, 1, 16])
     bconv1 = tf.get_variable("bconv1", shape=[16])
@@ -139,16 +137,15 @@ def complex_model(X, is_training):
     flat  = tf.reshape(relu3,[-1,4*4*4*64])
     fc1   = tf.matmul(flat,Wfc1)
     reluf = tf.nn.relu(fc1)
-    fc2   = tf.matmul(reluf,Wfc2)
+    fc2   = tf.matmul(reluf,Wfc2, name=name)
     
     return fc2[:, 0]
 
 def run_valid(sess, variables, feed_dict):
     loss, y_pred = sess.run(variables, feed_dict=feed_dict)
-    np.savetxt("y_valid_pred.txt", y_pred, fmt = '%.4f')
     return loss
 
-def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, epochs=1, batch_size=100):
+def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, mean, std, epochs, batch_size):
     log_file = open("log.txt", "a")
     los_file = open("los.txt", "a")
     print("\nTraining", file = log_file)
@@ -157,13 +154,15 @@ def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, fee
     Xd, yd = feed_dict_train[X], feed_dict_train[y]
     train_indicies = np.arange(Xd.shape[0])
     np.random.shuffle(train_indicies)
-    np.savetxt("y_train.txt", yd[train_indicies], fmt = '%.4f')
+    np.savetxt("y_train.txt", yd[train_indicies], fmt = '%.5f')
+    np.savetxt("y_valid.txt", feed_dict_valid[y], fmt = '%.5f')
     # iterate over epoches
     time_start=time.time()
+    mae_min = 0.5
     for e in range(epochs):
         # keep track of losses and accuracy
-        loss_trai = 0
-        y_pred_trai = []
+        loss_train = 0
+        y_pred_train = []
         for i in range(int(math.ceil(Xd.shape[0]/batch_size))):
             # generate indicies for the batch
             start_idx = (i*batch_size)%Xd.shape[0]
@@ -174,40 +173,41 @@ def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, fee
             actual_batch_size = yd[idx].shape[0]
             # have tensorflow compute losses and predictions and do gradient decent
             loss, y_pred, _ = sess.run(variables_train,feed_dict=feed_dict_train)
-            loss_trai += loss*loss*actual_batch_size
-            y_pred_trai.extend(list(y_pred))
+            loss_train += loss*loss*actual_batch_size
+            y_pred_train.extend(list(y_pred))
             time_end=time.time()
             print("{0:5d} {1:5d} {2:8.1f} {3:7.3f}".format(e, i, time_end-time_start, loss), file = log_file)
             log_file.close()
             log_file = open("log.txt", "a")
-        loss_trai = np.sqrt(loss_trai/Xd.shape[0])
-        # testing results
-        loss_test, y_pred_test = sess.run(variables_valid, feed_dict=feed_dict_valid)
-        # save training and testing results
-        print("Epoch {0:5d} training loss = {1:7.3f} testing loss = {2:7.3f}".format(e + 1, loss_trai, loss_test), file = los_file)
-        np.savetxt("y_train_pred.txt", y_pred_trai, fmt = '%.4f')
-        np.savetxt("y_valid_pred.txt", y_pred_test, fmt = '%.4f')
+        loss_train = np.sqrt(loss_train/Xd.shape[0])
+        # validating results
+        loss_valid, y_pred_valid = sess.run(variables_valid, feed_dict=feed_dict_valid)
+        mae = np.mean(np.abs(y_pred_valid - feed_dict_valid[y]))
+        mae = mae * std / mean
+        # save training and validating results
+        print("Epoch{0:5d} trainloss={1:6.3f} validloss={2:6.3f} mae={3:8.5f}".format(e+1,loss_train,loss_valid,mae), file=los_file)
+        los_file.close()
+        los_file = open("los.txt", "a")
         # save the model
-        if (e % 10 == 0):
+        if (e > 50 and mae < mae_min):
+            mae_min = mae
             saver.save(sess, "Model/model.ckpt"+str(e))
-            log_file.close()
-            los_file.close()
-            log_file = open("log.txt", "a")
-            los_file = open("los.txt", "a")
+            np.savetxt("y_valid_best.txt", y_pred_valid, fmt = '%.5f')
+            np.savetxt("y_train_best.txt", y_pred_train, fmt = '%.5f')
     log_file.close()
     los_file.close()
 
 def main():
     # testing data and training data
-    valid_struc, valid_label, train_struc, train_label = get_all_data()
+    valid_struc, valid_label, train_struc, train_label, mean, std = get_all_data()
     # placeholders
-    X = tf.placeholder(tf.float32, [None, resolution, resolution, resolution, 1])
-    y = tf.placeholder(tf.float32, [None])
-    is_training = tf.placeholder(tf.bool)
+    X = tf.placeholder(tf.float32, [None, resolution, resolution, resolution, 1], name="X")
+    y = tf.placeholder(tf.float32, [None], name="y")
+    is_training = tf.placeholder(tf.bool, name="is_training")
     # graph
-    y_pred = complex_model(X, is_training)
+    y_pred = complex_model(X, is_training, name="y_pred")
     # loss
-    loss = tf.sqrt(tf.losses.mean_squared_error(y_pred, y))
+    loss = tf.sqrt(tf.losses.mean_squared_error(y_pred, y), name="loss")
     # optimizer
     optimizer = tf.train.RMSPropOptimizer(1e-3)
     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -229,7 +229,7 @@ def main():
         print("\nvalid loss:", run_valid(sess, variables_valid, feed_dict_valid), file = log_file)
         log_file.close()
         # train the model
-        run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, 100, 20)
+        run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, mean, std, 200, 20)
 
 if __name__ == '__main__':
     sys.exit(main())

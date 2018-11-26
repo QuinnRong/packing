@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH -J tf-gpu
+#SBATCH -J tf-2d-gpu
 #SBATCH -p gpu
 #SBATCH --mail-type=end
 #SBATCH --mail-user=qyrong@sjtu.edu.cn
@@ -16,5 +16,5 @@ module purge
 module load miniconda3/4.3 cuda/9.0 cudnn/7.0
 
 source activate tf-py3-gpu
-python tf_3d.py
+python tf_3d_inference.py
 

@@ -35,31 +35,12 @@ def get_label(filename, start, end):
             label.append(float(lines[i].split()[1]))
     return np.array(index), np.array(label)
 
-def get_cross_section(dire, dist, struct):
-    '''
-    input:
-    direction: x, y or z
-    distance: coordinate in the direction
-    struct: array of shape (dim_z, dim_y, dim_x)
-    output:
-    2 dimensional cross section
-    '''
-    if dire == "x":
-        return struct[:,:,dist]
-    elif dire == "y":
-        return struct[:,dist,:]
-    elif dire == "z":
-        return struct[dist,:,:]
-    else:
-        sys.exit("direction not correct!")
-
-def get_struc(path, index, dire, dist):
+def get_struc(path, index):
     '''
     input:
     path + index[i] defines a stucture file
-    dire[i] + dist[i] represent a cross section
     output:
-    (len(index), dim_h, dim_w, len(dire))
+    (len(index), dim_z, dim_y, dim_x, 1)
     '''
     struc = []
     for id in index:
@@ -71,23 +52,20 @@ def get_struc(path, index, dire, dist):
         if data.shape[0] != dim_x**2:
             sys.exit("input is not a cubic!")
         data = data.reshape((resolution, resolution, resolution))
-        image_data = []
-        for i in range(len(dire)):
-            image_data.append(get_cross_section(dire[i], dist[i], data))
-        struc.append(np.array(image_data).transpose(1, 2, 0))
-    return np.array(struc)
+        struc.append(data)
+    return np.array(struc)[:, :, :, :, np.newaxis]
 
-def get_tf_input(labelpath, structpath, start, end, dire, dist):
+def get_tf_input(labelpath, structpath, start, end):
     '''
     input:
     path labelpath containing result.txt and structpath containing 3D_n.dat
     start and end defines index range
     output:
     label: (end-start+1,)
-    struc: (end-start+1, dim, dim, len(dire))
+    struc: (end-start+1, dim, dim, dim, 1)
     '''
     index, label = get_label(labelpath + "/result.txt", start, end)
-    struc = get_struc(structpath, index, dire, dist)
+    struc = get_struc(structpath, index)
     return struc, label
 
 def get_mean_std(filename, nline):
@@ -109,11 +87,8 @@ def get_all_data():
     '''
     get testing data
     '''
-    dire = ["x", "y", "x", "y"]
-    dist = [0, 0, 50, 50]
-    # testing data
     time_start=time.time()
-    test_struc, test_label = get_tf_input(test_param.label, test_param.struc, test_param.start, test_param.end, dire, dist)
+    test_struc, test_label = get_tf_input(test_param.label, test_param.struc, test_param.start, test_param.end)
     time_end=time.time()
     log_file = open("log.txt", "a")
     print("\nX_test: ", test_struc.shape, file=log_file)
@@ -139,10 +114,9 @@ def main():
         X = graph.get_operation_by_name("X").outputs[0]                         # X:0
         y = graph.get_operation_by_name("y").outputs[0]                         # y:0
         is_training = graph.get_operation_by_name("is_training").outputs[0]     # is_training:0
-        keep_prob = graph.get_operation_by_name("keep_prob").outputs[0]         # keep_prob:0
 
         variables_test = [loss, y_pred[:,0]]
-        feed_dict_test = {X: test_struc, y: test_label, is_training: True, keep_prob: 1}
+        feed_dict_test = {X: test_struc, y: test_label, is_training: True}
 
         loss, y_pred = sess.run(variables_test, feed_dict=feed_dict_test)
         np.savetxt("y_test_pred.txt", y_pred, fmt = '%.5f')
