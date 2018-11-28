@@ -15,8 +15,8 @@ class Param:
         self.start = start
         self.end   = end
 
-valid_param = Param("../../../fenics/run_1_valid", "../../../utility/run_1_valid/output", 0, 199)
-train_param = Param("../../../fenics/run_2_train", "../../../utility/run_2_train/output", 0, 799)
+valid_param = Param("../../../fenics/run_1_valid/output", "../../../utility/run_1_valid/output", 0, 199)
+train_param = Param("../../../fenics/run_2_train/output", "../../../utility/run_2_train/output", 0, 799)
 
 def get_label(filename, start, end):
     '''

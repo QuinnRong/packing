@@ -12,3 +12,6 @@
 *.opj
 cnn/cnn_*
 cnn/compare*
+cnn/final*
+EMT/*.txt
+*.bmp
