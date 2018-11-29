@@ -17,4 +17,3 @@ module load miniconda3/4.3 cuda/9.0 cudnn/7.0
 
 source activate tf-py3-gpu
 python tf_2d_inference.py
-

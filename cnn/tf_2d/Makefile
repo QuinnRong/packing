@@ -7,10 +7,16 @@ cpu:
 fat:
 	sbatch tf_fat.slurm
 
-test:
+test_cpu:
+	sbatch tf_cpu_inference.slurm
+
+test_gpu:
 	sbatch tf_gpu_inference.slurm
 
-.PHONY:clean, delete_log, delete_model
+test_fat:
+	sbatch tf_fat_inference.slurm
+
+.PHONY:clean, clean_all
 clean:
 	-rm *.err *.out
 clean_all:

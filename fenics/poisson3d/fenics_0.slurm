@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #SBATCH -J fenics
-#SBATCH -p cpu
+#SBATCH -p fat
 #SBATCH --mail-type=end
 #SBATCH --mail-user=qyrong@sjtu.edu.cn
 #SBATCH -o fenics-%j.out
@@ -15,4 +15,4 @@ module use /lustre/usr/modulefiles
 module load miniconda2/4.3
 
 source activate fenicsproject
-python Poisson3D_Mostafa_quinn.py
+python poisson3d.py 0

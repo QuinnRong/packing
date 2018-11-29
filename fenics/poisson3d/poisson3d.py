@@ -1,11 +1,11 @@
 from fenics import *
 import numpy as np
-import time, os
+import time, os, sys
 
 # global parameters
 input_dir  = "../../utility/run_1_valid/output"
 output_dir = "../../fenics/run_1_valid/output"
-section    = 0
+section    = int(sys.argv[1])
 id_range   = [section*100, (section+1)*100]
 resolution = 100
 TC = [1, 10]
@@ -157,6 +157,7 @@ dump_file = open(output_dir+"/result_"+str(section)+".txt", "w")
 for idx in range(id_range[0], id_range[1]):
     time_start = time.time()
     # Define variational problem
+    # for linear splver
     kappa = GetKappa(idx)
     u = TrialFunction(V)
     v = TestFunction(V)
@@ -167,6 +168,21 @@ for idx in range(id_range[0], id_range[1]):
     u = Function(V)
     prm = GetPrm()
     solve(a == L, u, bcs, solver_parameters=prm)
+
+    '''
+    # for newton_solver
+    kappa = GetKappa(idx)
+    u = Function(V)
+    v = TestFunction(V)
+    f = Constant(0.0)
+    a = dot(kappa*grad(u), grad(v))*dx
+    L = f*v*dx
+    # Compute solution
+    F = a - L
+    solve(F == 0, u, bcs,solver_parameters={"newton_solver":{"relative_tolerance":1e-4},
+                   "newton_solver":{"absolute_tolerance":1e-6},
+                   "newton_solver":{"linear_solver":"mumps"}})
+    '''
 
     # Evaluate integral of normal gradient over top boundary
     n = FacetNormal(mesh)

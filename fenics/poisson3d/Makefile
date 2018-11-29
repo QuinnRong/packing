@@ -1,5 +1,5 @@
 run:
-	sbatch fenics.slurm
+	sbatch fenics_0.slurm
 
 .PHONEY:clean
 clean:

@@ -1,6 +1,7 @@
-all:
-	g++ -std=c++11 main.cpp discretize.cpp
+g++ -Iinclude -std=c++11 ./src/main.cpp ./src/discretize.cpp -o discretize
+
+run:
 	sbatch discretize.slurm
 
 clean:
-	rm -rf output/* *.err *.out
+	-rm -rf output/* *.err *.out discretize

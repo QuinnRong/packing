@@ -15,4 +15,4 @@ source /usr/share/Modules/init/bash
 module purge
 module load icc impi
 
-./a.out
+./discretize

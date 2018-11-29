@@ -58,9 +58,9 @@ double StatisticalHomogeneity(double k1, double k2, double mu)
 int main()
 {
 	double k1 = 1, k2 = 10;
-	ofstream out1("EMT_MaxwellEucken.txt");
-	ofstream out2("EMT_Bruggeman.txt");
-	ofstream out3("StatisticalHomogeneity.txt");
+	ofstream out1("./output/EMT_MaxwellEucken.txt");
+	ofstream out2("./output/EMT_Bruggeman.txt");
+	ofstream out3("./output/StatisticalHomogeneity.txt");
 	for (int i = 0; i < 100; ++i)
 	{
 		double mu = i * 1.0 / 100 * 0.5 + 0.1;

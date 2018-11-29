@@ -14,8 +14,8 @@ class Param:
         self.start = start
         self.end   = end
 
-valid_param = Param("../../../fenics/run_1_valid", "../../../utility/run_1_valid/output", 0, 199)
-train_param = Param("../../../fenics/run_2_train", "../../../utility/run_2_train/output", 0, 799)
+valid_param = Param("../../../fenics/run_1_valid/output", "../../../utility/run_1_valid/output", 0, 199)
+train_param = Param("../../../fenics/run_2_train/output", "../../../utility/run_2_train/output", 0, 799)
 
 def get_label(filename, start, end):
     '''
@@ -158,8 +158,8 @@ def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, fee
     np.savetxt("y_valid.txt", feed_dict_valid[y], fmt = '%.5f')
     # iterate over epoches
     time_start=time.time()
-    mae_min = 0.5
-    for e in range(epochs):
+    # mae_min = 0.5
+    for e in range(1, epochs+1):
         # keep track of losses and accuracy
         loss_train = 0
         y_pred_train = []
@@ -185,15 +185,15 @@ def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, fee
         mae = np.mean(np.abs(y_pred_valid - feed_dict_valid[y]))
         mae = mae * std / mean
         # save training and validating results
-        print("Epoch{0:5d} trainloss={1:6.3f} validloss={2:6.3f} mae={3:8.5f}".format(e+1,loss_train,loss_valid,mae), file=los_file)
+        print("Epoch{0:5d} trainloss={1:6.3f} validloss={2:6.3f} mae={3:8.5f}".format(e,loss_train,loss_valid,mae), file=los_file)
         los_file.close()
         los_file = open("los.txt", "a")
         # save the model
-        if (e > 50 and mae < mae_min):
-            mae_min = mae
+        if (e % 50 == 0):
+            # mae_min = mae
             saver.save(sess, "Model/model.ckpt"+str(e))
-            np.savetxt("y_valid_best.txt", y_pred_valid, fmt = '%.5f')
-            np.savetxt("y_train_best.txt", y_pred_train, fmt = '%.5f')
+            np.savetxt("y_valid_"+str(e)+".txt", y_pred_valid, fmt = '%.5f')
+            np.savetxt("y_train_"+str(e)+".txt", y_pred_train, fmt = '%.5f')
     log_file.close()
     los_file.close()
 
@@ -229,7 +229,7 @@ def main():
         print("\nvalid loss:", run_valid(sess, variables_valid, feed_dict_valid), file = log_file)
         log_file.close()
         # train the model
-        run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, mean, std, 200, 20)
+        run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, mean, std, 250, 8)
 
 if __name__ == '__main__':
     sys.exit(main())

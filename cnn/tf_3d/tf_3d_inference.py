@@ -5,7 +5,8 @@ import numpy as np
 
 # global parameters
 resolution = 100
-model_file = "./Model/model.ckpt0"
+models = [100, 200, 300, 400, 500]
+model_file = "./Model/model.ckpt"
 
 class Param:
     def __init__(self, label, struc, start, end):
@@ -14,7 +15,7 @@ class Param:
         self.start = start
         self.end   = end
 
-test_param = Param("../../../fenics/run_3_test", "../../../utility/run_3_test/output", 0, 199)
+test_param = Param("../../../fenics/run_3_test/output", "../../../utility/run_3_test/output", 0, 199)
 
 def get_label(filename, start, end):
     '''
@@ -101,12 +102,15 @@ def main():
     # testing data
     test_struc, test_label = get_all_data()
     mean, std = get_mean_std("log.txt", 9)
-    test_label = (test_label - mean) / std 
     np.savetxt("y_test.txt", test_label, fmt = '%.5f')
+    test_label = (test_label - mean) / std 
     # run tensorflow
-    with tf.Session() as sess:
-        saver = tf.train.import_meta_graph(model_file + ".meta")
-        saver.restore(sess, model_file)
+    maes = []
+    rmses = []
+    for m in models:
+        with tf.Session() as sess:
+            saver = tf.train.import_meta_graph(model_file + str(m) + ".meta")
+            saver.restore(sess, model_file + str(m))
 
         graph = tf.get_default_graph()
         loss = graph.get_operation_by_name("loss").outputs[0]                   # loss:0
@@ -118,14 +122,23 @@ def main():
         variables_test = [loss, y_pred[:,0]]
         feed_dict_test = {X: test_struc, y: test_label, is_training: True}
 
-        loss, y_pred = sess.run(variables_test, feed_dict=feed_dict_test)
-        np.savetxt("y_test_pred.txt", y_pred, fmt = '%.5f')
-        mae = np.mean(np.abs(y_pred - test_label))
+            loss, y_pred = sess.run(variables_test, feed_dict=feed_dict_test)
+            np.savetxt("y_test_"+str(m)+".txt", y_pred*std+mean, fmt = '%.5f')
+            mae = np.mean(np.abs(y_pred - test_label)) * std / mean
+            maes.append(mae)
+            rmse = np.sqrt(np.mean(np.square((y_pred-test_label)*std/(test_label*std+mean))))
+            rmses.append(rmse)
 
-        log_file = open("log.txt", "a")
-        print("\nloss = ", loss, file=log_file)
-        print("mean absolute error = ", mae * std / mean, file=log_file)
-        log_file.close()
+            log_file = open("log.txt", "a")
+            print("\nloss = ", loss, file=log_file)
+            print("mean absolute error = ", mae, file=log_file)
+            print("root mean square error = ", rmse, file=log_file)
+            log_file.close()
+
+    log_file = open("log.txt", "a")
+    print("\nmean absolute error: ", np.mean(maes), " ", np.std(maes), file=log_file)
+    print("root mean square error: ", np.mean(rmses), " ", np.std(rmses), file=log_file)
+    log_file.close()
 
 if __name__ == '__main__':
     sys.exit(main())

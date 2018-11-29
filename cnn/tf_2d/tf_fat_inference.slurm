@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH -J tf-fat
+#SBATCH -J tf-2d-fat
 #SBATCH -p fat
 #SBATCH --mail-type=end
 #SBATCH --mail-user=qyrong@sjtu.edu.cn
@@ -15,4 +15,4 @@ module purge
 module load miniconda3/4.3
 
 source activate tf-py3-cpu
-python tf_3d.py
+python tf_2d_inference.py
