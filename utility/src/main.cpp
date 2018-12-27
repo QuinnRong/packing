@@ -6,6 +6,15 @@
 
 using namespace std;
 
+void run_once()
+{
+	Box box("../spheres/output/struct_0.dat", 100, 0.094413);
+	box.get_structure("0.txt", 100);
+	box.get_section("0.txt", "x", 0, 100);
+	box.get_section("0.txt", "y", 0, 100);
+	box.get_section("0.txt", "z", 0, 100);
+}
+
 int main()
 {
 	string root = "../..";
