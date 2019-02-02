@@ -20,11 +20,12 @@ int main(int argc, char **argv)
 
     std::ofstream summary("./output/summary.txt");
     summary << "filename    N    radius     pf" << std::endl;
-
+    
+    double m_pf[3] = {0.1, 0.35, 0.6};
     srand (time(NULL));
-    for (int i = 0; i < 500; ++i)
+    for (int i = 0; i < 3; ++i)
     {
-        input.maxpf = rand_range(0.1, 0.6);
+        input.maxpf = m_pf[i];
 
         sprintf(input.writefile, "./output/struct_%d.dat", i);
         sprintf(input.datafile, "./output/statis_%d.dat", i);

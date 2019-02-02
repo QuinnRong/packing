@@ -3,7 +3,7 @@
 
 using namespace std;
 
-double MaxwellEucken(double k1, double k2, double mu)
+double Maxwell(double k1, double k2, double mu)
 {	/*
 	k1: matrix
 	k2: filler
@@ -12,7 +12,7 @@ double MaxwellEucken(double k1, double k2, double mu)
 	return k1*(2*k1+k2-2*(k1-k2)*mu)/(2*k1+k2+(k1-k2)*mu);
 }
 
-double Bruggeman(double k1, double k2, double mu)
+double Reconstruction(double k1, double k2, double mu)
 {	/*
 	k1: matrix
 	k2: filler
@@ -29,7 +29,7 @@ double eval(double t, double x, double f)
 	return (temp*temp*temp*f - 1);
 }
 
-double StatisticalHomogeneity(double k1, double k2, double mu)
+double Bruggeman(double k1, double k2, double mu)
 {	/*
 	k1: matrix
 	k2: filler
@@ -55,20 +55,25 @@ double StatisticalHomogeneity(double k1, double k2, double mu)
 	return f;
 }
 
-int main()
+void dump()
 {
 	double k1 = 1, k2 = 10;
-	ofstream out1("./output/EMT_MaxwellEucken.txt");
-	ofstream out2("./output/EMT_Bruggeman.txt");
-	ofstream out3("./output/StatisticalHomogeneity.txt");
+	ofstream out1("./output/EMT_Maxwell.txt");
+	ofstream out2("./output/EMT_Reconstruction.txt");
+	ofstream out3("./output/EMT_Bruggeman.txt");
 	for (int i = 0; i < 100; ++i)
 	{
 		double mu = i * 1.0 / 100 * 0.5 + 0.1;
-		out1 << mu << " " << MaxwellEucken(k1, k2, mu) << endl;
-		out2 << mu << " " << Bruggeman(k1, k2, mu) << endl;
-		out3 << mu << " " << StatisticalHomogeneity(k1, k2, mu) << endl;
+		out1 << mu << " " << Maxwell(k1, k2, mu) << endl;
+		out2 << mu << " " << Reconstruction(k1, k2, mu) << endl;
+		out3 << mu << " " << Bruggeman(k1, k2, mu) << endl;
 	}
 	out1.close();
 	out2.close();
 	out3.close();
+}
+
+int main(int argc, char *argv[])
+{
+	dump();
 }

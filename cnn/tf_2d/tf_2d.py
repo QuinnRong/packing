@@ -15,8 +15,8 @@ class Param:
         self.start = start
         self.end   = end
 
-valid_param = Param("../../../fenics/run_1_valid/output", "../../../utility/run_1_valid/output", 0, 199)
-train_param = Param("../../../fenics/run_2_train/output", "../../../utility/run_2_train/output", 0, 799)
+valid_param = Param("../../fenics/output/run_1_valid", "../../qsgs_3d/output/run_1_valid", 0, 499)
+train_param = Param("../../fenics/output/run_2_train", "../../qsgs_3d/output/run_2_train", 0, 1999)
 
 def get_label(filename, start, end):
     '''
@@ -96,10 +96,10 @@ def get_all_data():
     '''
     get training data and validating data
     '''
-    dire = ["x", "y", "x", "y"]
-    dist = [0, 0, 50, 50]
+    dire = ["x", "y", "x", "y", "x", "y", "x", "y"]
+    dist = [0, 0, 25, 25, 50, 50, 75, 75]
     # validating data
-    log_file = open("log.txt", "a")
+    log_file = open("log.txt", "w")
     time_start=time.time()
     valid_struc, valid_label = get_tf_input(valid_param.label, valid_param.struc, valid_param.start, valid_param.end, dire, dist)
     time_end=time.time()
@@ -185,7 +185,7 @@ def run_valid(sess, variables, feed_dict):
 
 def run_train(sess, X, y, variables_train, feed_dict_train, variables_valid, feed_dict_valid, saver, mean, std, epochs, batch_size):
     log_file = open("log.txt", "a")
-    los_file = open("los.txt", "a")
+    los_file = open("los.txt", "w")
     print("\nTraining", file = log_file)
     print("epoch batch     time     loss", file = log_file)
     # shuffle indicies

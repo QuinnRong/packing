@@ -261,6 +261,44 @@ void Box::get_section(const std::string& filename, std::string dir, double dis, 
 	delete[] type;
 }
 
+double Box::get_section_pf(std::string dir, double dis, int res)
+{
+	int sum = 0;
+
+	if (dir == "x")
+	{
+		for (int z = 0; z < res; ++z)
+		{
+			for (int y = 0; y < res; ++y)
+			{
+				sum += in_sphere(dis, y * 1.0 / res, z * 1.0 / res) ? 1 : 0;
+			}
+		}
+	}
+	else if (dir == "y")
+	{
+		for (int z = 0; z < res; ++z)
+		{
+			for (int x = 0; x < res; ++x)
+			{
+				sum += in_sphere(x * 1.0 / res, dis, z * 1.0 / res) ? 1 : 0;
+			}
+		}
+	}
+	else if (dir == "z")
+	{
+		for (int y = 0; y < res; ++y)
+		{
+			for (int x = 0; x < res; ++x)
+			{
+				sum += in_sphere(x * 1.0 / res, y * 1.0 / res, dis) ? 1 : 0;
+			}
+		}
+	}
+
+	return sum * 1.0 / res / res;
+}
+
 void Box::get_structure(const std::string& filename, int res)
 {
 	std::string file = filename;

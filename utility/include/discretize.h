@@ -3,9 +3,6 @@
 
 #include <string>
 
-// #define SPT "\\"		// for windows
-#define SPT "/"		// for linux
-
 class GridField
 {
 public:
@@ -36,6 +33,8 @@ public:
 
 	void get_fenics_input(const std::string& path, int idx, int res);
 	void get_fenics_input_single_file(const std::string& path, int idx, int res);
+
+	double get_section_pf(std::string dir, double dis, int res);
 
 private:
 	void get_field(const std::string& filename);

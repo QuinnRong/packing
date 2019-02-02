@@ -9,3 +9,8 @@
 *.out
 *.opj
 *.bmp
+.vscode
+.DS_Store
+spheres/spheres
+utility/discretize
+EMT/emt
